@@ -184,8 +184,11 @@ function boot(): void {
     }
   })
 
-  // Reveal HUD once boot hands over.
-  bootSeq.done.then(() => hud.reveal())
+  // Reveal HUD once boot hands over — the system reveal moment.
+  bootSeq.done.then(() => {
+    scene.reveal()
+    hud.reveal()
+  })
 }
 
 boot()

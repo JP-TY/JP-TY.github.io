@@ -169,6 +169,13 @@ export function buildPanels(root: HTMLElement): Map<string, HTMLElement> {
     BUILDERS[section.id]?.(body)
 
     panel.append(titlebar, body)
+
+    // Stagger indices for the dock-reveal choreography (CSS panel-rise).
+    titlebar.style.setProperty('--i', '0')
+    Array.from(body.children).forEach((child, i) => {
+      ;(child as HTMLElement).style.setProperty('--i', String(i + 1))
+    })
+
     root.appendChild(panel)
     panels.set(section.id, panel)
   }

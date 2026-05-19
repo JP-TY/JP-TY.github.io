@@ -179,15 +179,22 @@ p {
   font-family: var(--font-display);
   font-size: 1.25rem;
   color: var(--green);
-  transition: opacity 600ms var(--ease-out);
-}
-#hud.hud-hidden {
-  opacity: 0;
 }
 
 .hud-corner {
   position: absolute;
   max-width: 40vw;
+  transition: opacity 600ms var(--ease-out), transform 700ms var(--ease-out);
+}
+#hud.hud-hidden .hud-tl,
+#hud.hud-hidden .hud-tr {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+#hud.hud-hidden .hud-bl,
+#hud.hud-hidden .hud-br {
+  opacity: 0;
+  transform: translateY(12px);
 }
 .hud-tl { top: var(--hud-inset); left: var(--hud-inset); }
 .hud-tr {
@@ -206,6 +213,11 @@ p {
 }
 .hud-bl { bottom: calc(var(--hud-inset) + 56px); left: var(--hud-inset); }
 .hud-br { bottom: var(--hud-inset); right: var(--hud-inset); text-align: right; }
+
+/* Staggered system reveal: the console powers up corner by corner */
+.hud-tr { transition-delay: 70ms; }
+.hud-bl { transition-delay: 140ms; }
+.hud-br { transition-delay: 210ms; }
 
 .hud-callsign {
   margin: 0;
@@ -272,11 +284,12 @@ p {
   padding: 6px;
   border: 1px solid var(--grid);
   background: color-mix(in srgb, var(--panel) 80%, transparent);
-  transition: opacity 600ms var(--ease-out);
+  transition: opacity 600ms var(--ease-out) 260ms, transform 700ms var(--ease-out) 260ms;
 }
 #nav.nav-hidden {
   opacity: 0;
   pointer-events: none;
+  transform: translate(-50%, 12px);
 }
 
 #nav button {
@@ -428,6 +441,20 @@ body.reduced-motion #crt {
   padding: 24px clamp(16px, 4vw, 32px) 32px;
 }
 
+/* Docked transmission: content blooms in as a staggered readout.
+   --i is set per child at build time; total stagger capped at 300ms. */
+.panel-titlebar,
+.panel-body > * {
+  animation: panel-rise 380ms var(--ease-out) backwards;
+  animation-delay: min(calc(var(--i, 0) * 45ms), 300ms);
+}
+@keyframes panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
 .panel h2 {
   margin: 0 0 4px;
   font-family: var(--font-display);
@@ -572,6 +599,7 @@ body.reduced-motion #crt {
   white-space: pre;
   transform-origin: 50% 50%;
   will-change: transform;
+  transition: opacity 150ms var(--ease-out), color 120ms var(--ease-out);
 }
 #rocket.locked {
   color: var(--accent, var(--green));
@@ -731,7 +759,9 @@ body.touch #exhaust {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
   }
 }
 

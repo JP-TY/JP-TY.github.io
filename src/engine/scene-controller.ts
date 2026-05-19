@@ -25,10 +25,11 @@ export class SceneController {
 
   private theta = 0.9
   private phi = 0.62
-  private dist = 30
+  /** Staging distance: held until boot hands over, then dolled in (system reveal). */
+  private dist = 54
   private thetaTarget = 0.9
   private phiTarget = 0.62
-  private distTarget = 30
+  private distTarget = 54
 
   private dragging = false
   private lastX = 0
@@ -48,6 +49,9 @@ export class SceneController {
     this.system = system
     this.events = events
     this.reducedMotion = reducedMotion
+    if (reducedMotion) {
+      this.dist = this.distTarget = 30 // no reveal dolly — start formed
+    }
     this.ascii = new AsciiRenderer(canvas)
     document.fonts.ready.then(() => this.ascii.refreshAtlas()).catch(() => {})
     this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200)
@@ -112,6 +116,11 @@ export class SceneController {
     requestAnimationFrame(loop)
   }
 
+  /** System reveal: boot hands over, the camera falls in from staging distance. */
+  reveal(): void {
+    if (!this.reducedMotion) this.distTarget = 30
+  }
+
   /** Fly the virtual pointer to a body (autopilot), then fire onDock. */
   flyTo(bodyId: string): void {
     const screen = this.system.screenPosition(bodyId, this.camera)
@@ -133,7 +142,7 @@ export class SceneController {
     const start = performance.now()
     const step = (): void => {
       const t = Math.min((performance.now() - start) / duration, 1)
-      const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2 // easeInOutQuad
+      const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2 // easeInOutCubic
       const mt = 1 - e
       this.pointer.x =
         mt * mt * mt * from.x + 3 * mt * mt * e * c1.x + 3 * mt * e * e * c2.x + e * e * e * to.x
@@ -162,6 +171,7 @@ export class SceneController {
     const id = this.pick(x, y)
     if (id === this.hoveredId) return
     this.hoveredId = id
+    this.system.setHighlighted(id)
     if (!id) {
       this.events.onHover(null)
       return

@@ -18,6 +18,13 @@ export class Hud {
   private coords = document.getElementById('hud-coords') as HTMLParagraphElement
   private nav = document.getElementById('nav') as HTMLElement
   private flavorTimer: number | null = null
+  private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  /** Phosphor flicker when a readout changes — the terminal is alive. */
+  private flick(el: HTMLElement): void {
+    if (this.reduced || !el.animate) return
+    el.animate([{ opacity: 0.15 }, { opacity: 1 }], { duration: 140, easing: 'ease-out' })
+  }
 
   constructor(
     onNavigate: (id: string) => void,
@@ -49,6 +56,7 @@ export class Hud {
       this.target.textContent = '— none —'
       this.target.style.color = ''
     }
+    this.flick(this.target)
   }
 
   setCoords(x: number, y: number): void {
@@ -61,9 +69,13 @@ export class Hud {
     const lines = FLAVOR[id] ?? []
     let i = 0
     this.log.textContent = lines[0] ?? ''
+    this.flick(this.log)
     this.flavorTimer = window.setInterval(() => {
       i = (i + 1) % Math.max(lines.length, 1)
-      if (lines[i]) this.log.textContent = lines[i]
+      if (lines[i]) {
+        this.log.textContent = lines[i]
+        this.flick(this.log)
+      }
     }, 3200)
   }
 
@@ -73,6 +85,7 @@ export class Hud {
       this.flavorTimer = null
     }
     this.log.textContent = `> ${text}`
+    this.flick(this.log)
   }
 
   idle(): void {
@@ -81,6 +94,7 @@ export class Hud {
       this.flavorTimer = null
     }
     this.log.textContent = '> systems nominal. exploring…'
+    this.flick(this.log)
   }
 
   reveal(): void {

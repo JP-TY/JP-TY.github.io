@@ -46,8 +46,12 @@ export class SolarSystem {
   private moonGroups: { group: THREE.Group; projectId: string; angle: number }[] = []
   private stars: THREE.Points[] = []
   private sun: THREE.Mesh
+  private reducedMotion: boolean
+  private highlightId: string | null = null
+  private everyBody: Body[] = []
 
   constructor(reducedMotion: boolean, projects: ProjectContent[]) {
+    this.reducedMotion = reducedMotion
     this.scene.fog = new THREE.Fog(0x04060a, 45, 120)
     this.scene.background = new THREE.Color(0x04060a)
 
@@ -71,7 +75,11 @@ export class SolarSystem {
     // Planets.
     const geo = new THREE.SphereGeometry(1, 24, 24)
     for (const cfg of PLANETS) {
-      const mat = new THREE.MeshLambertMaterial({ color: cfg.color })
+      const mat = new THREE.MeshLambertMaterial({
+        color: cfg.color,
+        emissive: cfg.color,
+        emissiveIntensity: 0, // rises on hover — the body answers the lock
+      })
       const mesh = new THREE.Mesh(geo, mat)
       mesh.scale.setScalar(cfg.radius)
       mesh.userData.bodyId = cfg.id
@@ -99,7 +107,7 @@ export class SolarSystem {
     projects.forEach((p, i) => {
       const mesh = new THREE.Mesh(
         moonGeo,
-        new THREE.MeshLambertMaterial({ color: 0xbfeeff })
+        new THREE.MeshLambertMaterial({ color: 0xbfeeff, emissive: 0xbfeeff, emissiveIntensity: 0 })
       )
       mesh.userData.bodyId = `moon:${p.id}`
       const arm = new THREE.Group()
@@ -139,6 +147,7 @@ export class SolarSystem {
     }
 
     if (reducedMotion) this.update(0) // park bodies at their phases
+    this.everyBody = [...this.bodies.values(), ...this.moons.values()]
   }
 
   /** Advance orbits. dt in seconds. */
@@ -156,6 +165,23 @@ export class SolarSystem {
       m.group.position.set(Math.cos(m.angle) * 2.1, 0, Math.sin(m.angle) * 2.1)
     }
     for (const s of this.stars) s.rotation.y += 0.004 * dt
+    this.applyGlow(Math.min(dt * 8, 1))
+  }
+
+  /** Hover feedback: the locked body itself answers with an emissive rise. */
+  setHighlighted(id: string | null): void {
+    this.highlightId = id
+    if (this.reducedMotion) this.applyGlow(1) // update() is parked in reduced motion
+  }
+
+  private applyGlow(blend: number): void {
+    for (const body of this.everyBody) {
+      const mat = body.mesh.material as THREE.MeshLambertMaterial
+      const base = body.id === 'about' ? 0.9 : 0
+      const hovered = body.id === this.highlightId
+      const target = hovered ? (body.id === 'about' ? 1.5 : 0.55) : base
+      mat.emissiveIntensity += (target - mat.emissiveIntensity) * blend
+    }
   }
 
   /** Sun world position (About body). */

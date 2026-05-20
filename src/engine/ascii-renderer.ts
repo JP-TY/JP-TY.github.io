@@ -59,9 +59,30 @@ uniform vec2 uGrid;      // cols, rows
 uniform float uRamp;     // glyph count
 uniform float uTime;
 uniform vec3 uVoid;      // background color
+uniform float uWarp;     // hyperspace intensity 0..1
+uniform vec2 uWarpDir;   // normalized travel direction (UV space)
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+// Directional luminance smear: star-streaks emerge from the glyph ramp
+// itself — accumulated brightness along the travel vector maps to
+// denser glyphs (. : + #), so hyperspace costs no extra geometry.
+vec3 warpSample(vec2 uv) {
+  vec3 base = texture2D(tScene, uv).rgb;
+  if (uWarp < 0.01) return base;
+  vec3 acc = base * 0.6;
+  float total = 0.6;
+  for (int i = 1; i <= 5; i++) {
+    float fi = float(i) / 5.0;
+    vec2 o = uWarpDir * (fi * uWarp * 0.30);
+    float w = 1.0 - fi * 0.75;
+    acc += texture2D(tScene, uv - o).rgb * w;
+    acc += texture2D(tScene, uv + o).rgb * w;
+    total += 2.0 * w;
+  }
+  return acc / total;
 }
 
 void main() {
@@ -69,7 +90,17 @@ void main() {
   vec2 cell = floor(vUv * grid);
   vec2 cellUv = (cell + 0.5) / grid;
 
-  vec3 scene = texture2D(tScene, cellUv).rgb;
+  // Warp: chromatic aberration along the travel vector + directional smear.
+  vec3 scene;
+  if (uWarp < 0.01) {
+    scene = texture2D(tScene, cellUv).rgb;
+  } else {
+    vec2 ca = uWarpDir * (uWarp * 0.008);
+    scene.r = warpSample(cellUv + ca).r;
+    scene.g = warpSample(cellUv).g;
+    scene.b = warpSample(cellUv - ca).b;
+    scene *= 1.0 + uWarp * 0.25; // rush lift
+  }
   float lum = dot(scene, vec3(0.2126, 0.7152, 0.0722));
 
   // Map luminance to a glyph, with a little temporal jitter so
@@ -141,6 +172,8 @@ export class AsciiRenderer {
         uRamp: { value: Math.min(RAMP.length, ATLAS_COLS * ATLAS_ROWS) },
         uTime: { value: 0 },
         uVoid: { value: new THREE.Color('#04060a') },
+        uWarp: { value: 0 },
+        uWarpDir: { value: new THREE.Vector2(0, 0) },
       },
       depthTest: false,
       depthWrite: false,
@@ -176,6 +209,12 @@ export class AsciiRenderer {
 
   get grid(): { cols: number; rows: number } {
     return { cols: this.cols, rows: this.rows }
+  }
+
+  /** Hyperspace: streak intensity 0..1 + normalized screen-space travel direction. */
+  setWarp(intensity: number, dirX: number, dirY: number): void {
+    this.material.uniforms.uWarp.value = intensity
+    ;(this.material.uniforms.uWarpDir.value as THREE.Vector2).set(dirX, dirY)
   }
 
   render(scene: THREE.Scene, camera: THREE.Camera, time: number): void {

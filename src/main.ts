@@ -91,6 +91,13 @@ function boot(): void {
       if (bodyId.startsWith('moon:')) panels.pendingProject = bodyId.slice(5)
       panels.open(id)
     },
+    onZone(zone) {
+      hud.setSector(zone)
+      if (zone === 'GALACTIC' && !sessionStorage.getItem('ty-galactic-seen')) {
+        sessionStorage.setItem('ty-galactic-seen', '1')
+        hud.message('galactic overview — scroll in to return to the system')
+      }
+    },
   })
 
   const rocket = new Rocket(scene, reducedMotion, touch)
@@ -164,6 +171,9 @@ function boot(): void {
     if (id && !panels.isOpen && !document.body.classList.contains('classic')) {
       flyTo(id)
     }
+    // Zoom continuum from the keyboard: +/- dive and climb.
+    if (e.key === '+' || e.key === '=') scene.zoomBy(0.82)
+    else if (e.key === '-' || e.key === '_') scene.zoomBy(1.22)
   })
 
   // Easter egg: the classic konami code. Because a terminal owes you one.

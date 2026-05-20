@@ -16,6 +16,7 @@ export class Hud {
   private log = document.getElementById('mission-log') as HTMLParagraphElement
   private target = document.getElementById('hud-target') as HTMLParagraphElement
   private coords = document.getElementById('hud-coords') as HTMLParagraphElement
+  private sector = document.getElementById('hud-sector') as HTMLParagraphElement
   private nav = document.getElementById('nav') as HTMLElement
   private flavorTimer: number | null = null
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -61,6 +62,15 @@ export class Hud {
 
   setCoords(x: number, y: number): void {
     this.coords.textContent = `X ${String(Math.round(x)).padStart(4, '0')} · Y ${String(Math.round(y)).padStart(4, '0')}`
+  }
+
+  /** Zoom-continuum readout: which regime the camera is flying in. */
+  setSector(zone: string): void {
+    if (!this.sector) return
+    const label =
+      zone === 'GALACTIC' ? 'GALACTIC OVERVIEW' : zone === 'ORBITAL' ? 'ORBITAL SURVEY' : 'SYSTEM'
+    this.sector.textContent = `SECTOR: ${label}`
+    this.flick(this.sector)
   }
 
   /** Cycle in-fiction flavor lines for the docked section. */

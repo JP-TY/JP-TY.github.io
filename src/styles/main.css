@@ -228,7 +228,8 @@ p {
 .hud-label,
 #mission-log,
 #hud-target,
-#hud-coords {
+#hud-coords,
+#hud-sector {
   margin: 0;
   font-size: 1.05rem;
   color: var(--dim);

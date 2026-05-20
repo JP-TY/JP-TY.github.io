@@ -18,6 +18,40 @@ await page.keyboard.press('Escape') // skip boot
 await page.waitForTimeout(1200)
 await shot(page, '01-scene')
 
+// Zoom continuum: pull out to the galactic overview…
+await page.mouse.move(720, 450)
+for (let i = 0; i < 26; i++) {
+  await page.mouse.wheel(0, 260)
+  await page.waitForTimeout(25)
+}
+await page.waitForTimeout(1400)
+await shot(page, '13-galaxy')
+
+// …then dive back in — orbital close-up on the sun.
+for (let i = 0; i < 46; i++) {
+  await page.mouse.wheel(0, -260)
+  await page.waitForTimeout(20)
+}
+await page.waitForTimeout(1400)
+await shot(page, '14-orbital')
+
+// Return to system cruising altitude.
+for (let i = 0; i < 12; i++) {
+  await page.mouse.wheel(0, 260)
+  await page.waitForTimeout(20)
+}
+await page.waitForTimeout(1200)
+
+// Warp drive: long-hop flight to CONTACT — capture mid-hyperspace streaks
+await page.click('#nav button[data-nav="contact"]')
+await page.waitForTimeout(700)
+await shot(page, '11-warp-mid')
+await page.waitForTimeout(350)
+await shot(page, '12-warp-cruise')
+await page.waitForTimeout(1800) // dock completes
+await page.keyboard.press('Escape')
+await page.waitForTimeout(700)
+
 // Hover the sun (center of screen)
 await page.mouse.move(720, 450)
 await page.waitForTimeout(400)

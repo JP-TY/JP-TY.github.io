@@ -1,20 +1,19 @@
 {
   "name": "jp-ty.github.io",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
-  "description": "TY.STELLAR — an ASCII solar-system developer portfolio for James Gabriel Elijah Ty",
+  "description": "TY ROYALE — an Atlus-inspired JRPG portfolio for James Gabriel Elijah Ty",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "qa": "node scripts/qa.mjs"
   },
   "dependencies": {
-    "animejs": "^4.0.2",
-    "three": "^0.171.0"
+    "animejs": "^4.0.2"
   },
   "devDependencies": {
-    "@types/three": "^0.185.4",
     "playwright": "^1.62.1",
     "typescript": "~5.7.2",
     "vite": "^6.0.0"

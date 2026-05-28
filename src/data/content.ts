@@ -1,7 +1,7 @@
 /**
- * TY.STELLAR — single source of truth for all portfolio content.
- * Sourced from Ty_CV (2).pdf. Fiction-flavored copy stays fact-complete:
- * every joke sits next to real, complete CV content (PRODUCT.md principle 3).
+ * Portfolio content — single source of truth.
+ * Sourced from Ty_CV (2).pdf. Copy stays fact-complete:
+ * every claim sits next to real, complete CV content.
  */
 
 export interface ProjectContent {
@@ -15,11 +15,10 @@ export interface ProjectContent {
 
 export interface SectionContent {
   id: string
-  /** Nav + HUD label */
+  /** Menu command label */
   label: string
-  /** Panel window title */
+  /** Document window kicker */
   title: string
-  accentVar: string
   heading: string
   intro: string
 }
@@ -27,17 +26,15 @@ export interface SectionContent {
 export const profile = {
   name: 'James Gabriel Elijah Ty',
   handle: 'JTY',
-  heroLine: 'CS undergrad rendering worlds — in XR, on the cloud, across maps.',
-  bootByline: 'BS Computer Science · University of the Philippines Cebu · Class of 2027',
+  heroLine: 'Software developer and CS undergraduate — XR, cloud, geospatial systems.',
   location: 'Cebu City, Philippines',
   email: 'jamesty016@gmail.com',
-  phone: '(+63) 934 996 3293',
   github: 'https://github.com/JP-TY',
   linkedin: 'https://www.linkedin.com/in/james-gabriel-elijah-ty-6a7b0a334/',
   about: [
-    'I build things that render: XR training worlds on the web, credit-scoring systems on the cloud, and geospatial engines that help city planners see their streets differently.',
-    'Currently a BS Computer Science student at UP Cebu (class of 2027), research/developer intern at ISCOLab, and a GitHub Campus Expert — one of the 1%. I like my software like I like my starships: fast, resilient, and a little bit fun.',
-    'This site is a solar system because a résumé is flat, and I refuse. Fly around. Land somewhere. Every planet is real work — the ASCII is just the gravity.',
+    'I’m a computer science undergraduate at the University of the Philippines Cebu building software across XR, cloud, and geospatial systems — from WebXR training prototypes to containerized, cloud-hosted scoring platforms.',
+    'Currently a research and developer intern at ISCOLab, a GitHub Campus Expert, and lead of the AWS Student Builder Group at UP Cebu. Recent work includes geospatial platforms that help city planners reason about pedestrian accessibility and urban greenery.',
+    'This site is built the way I build software: no frameworks, careful attention to motion and detail, accessibility treated as a requirement. The interface borrows the menu design of Atlus JRPGs — the craft is the point.',
   ],
   education: {
     school: 'University of the Philippines Cebu',
@@ -52,52 +49,47 @@ export const sections: SectionContent[] = [
   {
     id: 'about',
     label: 'ABOUT',
-    title: 'STELLAR-CARTOGRAPHY.LOG',
-    accentVar: '--green',
-    heading: 'The Pilot',
-    intro: 'Sun of this system. Everything else orbits from here.',
+    title: '01 / 06',
+    heading: 'About',
+    intro: 'Profile, education, and background.',
   },
   {
     id: 'projects',
     label: 'PROJECTS',
-    title: 'PROJECTS.LOG',
-    accentVar: '--cyan',
-    heading: 'Planetary Works',
-    intro: 'Five moons in orbit. Each one shipped, each one judged. Open a moon for its dossier.',
+    title: '02 / 06',
+    heading: 'Projects',
+    intro: 'Selected work in XR, cloud infrastructure, and geospatial systems.',
   },
   {
     id: 'experience',
     label: 'EXPERIENCE',
-    title: 'MISSION-LOGS.LOG',
-    accentVar: '--violet',
-    heading: 'Mission Logs',
-    intro: 'Internships and command postings. Log entries, most recent first.',
+    title: '03 / 06',
+    heading: 'Experience',
+    intro: 'Roles and responsibilities, most recent first.',
   },
   {
     id: 'achievements',
     label: 'ACHIEVEMENTS',
-    title: 'HIGH-SCORES.DAT',
-    accentVar: '--amber',
-    heading: 'High Scores',
-    intro: 'Insert coin to admire. All runs verified on real hardware.',
+    title: '04 / 06',
+    heading: 'Achievements',
+    intro: 'Competition results, awards, and certifications.',
   },
   {
     id: 'skills',
     label: 'SKILLS',
-    title: 'CARGO-MANIFEST.LOG',
-    accentVar: '--magenta',
-    heading: 'Cargo Manifest',
-    intro: 'What this ship is stocked with. All systems operational.',
+    title: '05 / 06',
+    heading: 'Skills',
+    intro: 'Technologies I work with, grouped by category.',
   },
   {
     id: 'contact',
     label: 'CONTACT',
-    title: 'TRANSMISSION.LOG',
-    accentVar: '--orange',
-    heading: 'Open a Channel',
-    intro: 'This relay is always listening. Response time: one Earth rotation or less.',
+    title: '06 / 06',
+    heading: 'Contact',
+    intro: 'Open to internships, collaborations, and conversations.',
   },
 ]
+
 
 export const projects: ProjectContent[] = [
   {
@@ -108,7 +100,7 @@ export const projects: ProjectContent[] = [
     bullets: [
       'Engineered an end-to-end, privacy-preserving credit capacity profiling engine using alternative data structures like telco and e-wallet telemetry.',
       'Architected resilient cloud infrastructure on Huawei Cloud — ELB and Cloud CDN routing to containerized microservices on Cloud Container Engine (CCE).',
-      'Designed an automated MLOps retraining pipeline monitoring model drift via Cloud Eye, orchestrating continuous retraining through ModelArts.',
+      'Designed an automated MLOps retraining pipeline monitoring model drift via Cloud Eye, orchestrating retraining and evaluation through ModelArts.',
     ],
     award: 'Huawei Developer Competition 2025 — 2nd Runner Up · APRU Tech Policy Hackathon 2025 — Honorable Mention',
   },
@@ -160,6 +152,7 @@ export const projects: ProjectContent[] = [
     award: 'Chosen for development as a microcredential for a Taiwanese semiconductor company',
   },
 ]
+
 
 export interface MissionLog {
   org: string
@@ -226,6 +219,7 @@ export const missions: MissionLog[] = [
   },
 ]
 
+
 export interface Achievement {
   name: string
   result: string
@@ -267,17 +261,5 @@ export const skills: SkillGroup[] = [
   { label: 'ML / AI', items: ['TensorFlow', 'AWS SageMaker', 'n8n', 'Computer Vision', 'RAG'] },
 ]
 
-export const bootLines: string[] = [
-  'TY-OS v2.6.1 — stellar terminal',
-  'BIOS check................. OK',
-  'phosphor array............. OK',
-  'gravity................. 9.807',
-  'ASCII renderer.......... armed',
-  'loading cartography......... OK',
-  'pilot: JAMES GABRIEL ELIJAH TY',
-  '',
-  'welcome aboard. click a planet to dock.',
-  '',
-]
 
 

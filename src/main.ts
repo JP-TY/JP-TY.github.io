@@ -1,204 +1,213 @@
 /**
- * TY.STELLAR — entry point.
- * Wires boot sequence, ASCII scene, rocket cursor, panels, HUD,
- * sound, classic mode, and the easter egg.
+ * James Ty Portfolio — orchestrator. Title screen, hash router, command menu,
+ * section documents, stat counters, sound toggle, keyboard shortcuts.
  */
+
 import './styles/main.css'
-import { SceneController } from './engine/scene-controller'
-import { SolarSystem } from './engine/solar-system'
-import { Rocket } from './engine/rocket'
-import { BootSequence } from './ui/boot'
-import { Hud } from './ui/hud'
-import { PanelController } from './ui/panels'
-import { buildPanels, sectionById } from './ui/panel-content'
-import { Sound } from './ui/sound'
-import { buildClassic } from './ui/classic'
-import { projects } from './data/content'
+import { animate } from 'animejs'
+import { parseHash, Router } from './engine/router'
+import { startMotes } from './engine/motes'
+import { isSoundEnabled, setSoundEnabled, sfx } from './engine/audio'
+import { Boot } from './ui/boot'
+import { Menu } from './ui/menu'
+import { renderSection } from './ui/panel-content'
+import { prefersReducedMotion, revealHub, revealView, wipeTransition, exitHub, exitView } from './ui/transitions'
+import { sections, projects, achievements, certifications } from './data/content'
 
-const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-const touch = window.matchMedia('(pointer: coarse)').matches
-if (touch) document.body.classList.add('touch')
-if (reducedMotion) document.body.classList.add('reduced-motion')
+const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector<T>(sel)
 
-function webglAvailable(): boolean {
-  try {
-    const c = document.createElement('canvas')
-    return !!(c.getContext('webgl2') ?? c.getContext('webgl'))
-  } catch {
-    return false
+const STATS: Record<string, number> = {
+  projects: projects.length,
+  awards: achievements.length,
+  certs: certifications.length,
+}
+
+let router!: Router
+let menu!: Menu
+let booted = false
+let currentSection: string | null = null
+/** Coalesce navigation: never let a second blade start mid-cut. */
+let navigating = false
+
+function initSoundToggle() {
+  const btn = $('#sound-toggle')!
+  const sync = () => {
+    btn.textContent = isSoundEnabled() ? '[ SOUND: ON ]' : '[ SOUND: OFF ]'
+    btn.setAttribute('aria-pressed', String(isSoundEnabled()))
   }
+  btn.addEventListener('click', () => {
+    setSoundEnabled(!isSoundEnabled())
+    sync()
+    sfx.confirm()
+  })
+  sync()
 }
 
-function enterClassic(): void {
-  document.body.classList.add('classic')
-  const classic = document.getElementById('classic') as HTMLElement
-  classic.hidden = false
+function animateStats() {
+  document.querySelectorAll<HTMLElement>('.stat-num').forEach((n, i) => {
+    const target = STATS[n.dataset.stat ?? ''] ?? 0
+    if (prefersReducedMotion()) {
+      n.textContent = String(target)
+      return
+    }
+    const obj = { v: 0 }
+    animate(obj, {
+      v: target,
+      duration: 1100,
+      ease: 'outExpo',
+      delay: 600 + i * 120,
+      onUpdate: () => {
+        n.textContent = String(Math.round(obj.v))
+      },
+    })
+  })
 }
 
-function boot(): void {
-  const sound = new Sound()
-  const bootSeq = new BootSequence(reducedMotion)
+function enterHub() {
+  $('#app')!.hidden = false
+  $('#hub')!.hidden = false
+  $('#view')!.hidden = true
+  $('#chrome')!.hidden = false
+  // The command menu re-slams in on EVERY arrival — Persona/Metaphor replay
+  // their menu entrance each time it opens, and replaying keeps the hub
+  // visible after exitHub() faded it out for the blade.
+  revealHub()
+  animateStats()
+  // Keyboard users start on command 01.
+  menu.focusFirst()
+}
 
-  // --- WebGL capability gate: no GL, no theater — classic mode. ---
-  if (!webglAvailable()) {
-    buildClassic(
-      document.getElementById('classic') as HTMLElement,
-      () => window.location.reload()
-    )
-    enterClassic()
+/** Blade-cut into a section document. Coalesced; instant under reduced motion. */
+async function openSection(id: string) {
+  const sec = sections.find((s) => s.id === id)
+  if (!sec || navigating || currentSection === id) return
+  navigating = true
+  sfx.open()
+  if (prefersReducedMotion()) {
+    $('#app')!.hidden = false
+    $('#chrome')!.hidden = false
+    $('#hub')!.hidden = true
+    $('#view')!.hidden = false
+    setViewContent(id, sec)
+    $('#view-body')!.focus({ preventScroll: true })
+    navigating = false
     return
   }
-
-  const system = new SolarSystem(reducedMotion, projects)
-  // Panels, HUD, and the solar system all read the same content.ts.
-  const panelsRoot = document.getElementById('panels') as HTMLElement
-  const panelEls = buildPanels(panelsRoot)
-
-  const hud = new Hud((id) => flyTo(id), sound)
-  const panels = new PanelController(panelEls, reducedMotion, {
-    onOpen(id) {
-      rocket.setParked(true)
-      hud.setActive(id)
-      const section = sectionById(id)
-      if (section) hud.setTarget(`DOCKED: ${section.label}`, `var(${section.accentVar})`)
-      hud.playFlavor(id)
-      sound.dock()
-      if (id === 'projects' && panels.pendingProject) hud.message(`dossier: ${panels.pendingProject}`)
+  exitHub()
+  await wipeTransition(
+    () => {
+      // Swapping under cover: release the nav lock the instant the new scene
+      // exists, so Escape / links are honoured while the blade is still out.
+      $('#app')!.hidden = false
+      $('#chrome')!.hidden = false
+      $('#hub')!.hidden = true
+      $('#view')!.hidden = false
+      setViewContent(id, sec)
+      revealView()
+      $('#view-body')!.focus({ preventScroll: true })
+      navigating = false
     },
-    onClose() {
-      rocket.setParked(false)
-      hud.setActive(null)
-      hud.idle()
-      sound.undock()
-    },
-  })
-
-  const canvas = document.getElementById('space') as HTMLCanvasElement
-  const scene = new SceneController(canvas, system, reducedMotion, {
-    onHover(body) {
-      if (panels.isOpen) return
-      if (body) {
-        hud.setTarget(`LOCK: ${body.label}`, body.accent)
-        rocket.setLocked(true, body.accent)
-        sound.hover()
-      } else {
-        hud.setTarget(null)
-        rocket.setLocked(false)
-      }
-    },
-    onDock(bodyId) {
-      const id = bodyId.startsWith('moon:') ? 'projects' : bodyId
-      if (bodyId.startsWith('moon:')) panels.pendingProject = bodyId.slice(5)
-      panels.open(id)
-    },
-    onZone(zone) {
-      hud.setSector(zone)
-      if (zone === 'GALACTIC' && !sessionStorage.getItem('ty-galactic-seen')) {
-        sessionStorage.setItem('ty-galactic-seen', '1')
-        hud.message('galactic overview — scroll in to return to the system')
-      }
-    },
-  })
-
-  const rocket = new Rocket(scene, reducedMotion, touch)
-
-  // Autopilot from the nav strip.
-  function flyTo(id: string): void {
-    if (panels.current === id) return
-    if (panels.isOpen) panels.close()
-    scene.flyTo(id)
-  }
-
-  // HUD coordinates follow the virtual pointer (throttled by rAF cadence).
-  let lastCoords = 0
-  window.addEventListener(
-    'pointermove',
-    (e) => {
-      const now = performance.now()
-      if (now - lastCoords > 90) {
-        lastCoords = now
-        hud.setCoords(e.clientX, e.clientY)
-      }
-    },
-    { passive: true }
+    { title: sec.title, kicker: 'SECTION 0' + (sections.indexOf(sec) + 1) },
   )
-
-  // Sound toggle.
-  const soundBtn = document.getElementById('toggle-sound') as HTMLButtonElement
-  soundBtn.addEventListener('click', () => {
-    const on = sound.toggle()
-    soundBtn.textContent = `[ SOUND: ${on ? 'ON' : 'OFF'} ]`
-    soundBtn.setAttribute('aria-pressed', String(on))
-  })
-
-  // Classic mode toggle.
-  const classicBtn = document.getElementById('toggle-classic') as HTMLButtonElement
-  const classicRoot = document.getElementById('classic') as HTMLElement
-  let classicBuilt = false
-  classicBtn.addEventListener('click', () => {
-    const on = !document.body.classList.contains('classic')
-    document.body.classList.toggle('classic', on)
-    classicBtn.setAttribute('aria-pressed', String(on))
-    if (on) {
-      if (!classicBuilt) {
-        buildClassic(classicRoot, () => {
-          document.body.classList.remove('classic')
-          classicRoot.hidden = true
-          classicBtn.setAttribute('aria-pressed', 'false')
-          classicBtn.focus()
-        })
-        classicBuilt = true
-      }
-      classicRoot.hidden = false
-      if (panels.isOpen) panels.close()
-    } else {
-      classicRoot.hidden = true
-    }
-  })
-
-  // Keyboard: 1–6 dock to bodies from anywhere.
-  const keyMap: Record<string, string> = {
-    '1': 'about',
-    '2': 'projects',
-    '3': 'experience',
-    '4': 'achievements',
-    '5': 'skills',
-    '6': 'contact',
-  }
-  document.addEventListener('keydown', (e) => {
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-    const id = keyMap[e.key]
-    if (id && !panels.isOpen && !document.body.classList.contains('classic')) {
-      flyTo(id)
-    }
-    // Zoom continuum from the keyboard: +/- dive and climb.
-    if (e.key === '+' || e.key === '=') scene.zoomBy(0.82)
-    else if (e.key === '-' || e.key === '_') scene.zoomBy(1.22)
-  })
-
-  // Easter egg: the classic konami code. Because a terminal owes you one.
-  const KONAMI = [
-    'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
-    'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a',
-  ]
-  let konamiIndex = 0
-  document.addEventListener('keydown', (e) => {
-    if (e.key === KONAMI[konamiIndex]) {
-      konamiIndex++
-      if (konamiIndex === KONAMI.length) {
-        konamiIndex = 0
-        hud.message('CHEAT ACCEPTED: WAFERS, PLEASE! unlocked 🧇 — you absolute legend.')
-      }
-    } else {
-      konamiIndex = e.key === KONAMI[0] ? 1 : 0
-    }
-  })
-
-  // Reveal HUD once boot hands over — the system reveal moment.
-  bootSeq.done.then(() => {
-    scene.reveal()
-    hud.reveal()
-  })
 }
 
-boot()
+/** Blade-cut back to the command menu. */
+async function closeSection() {
+  if (currentSection === null || navigating) return
+  navigating = true
+  sfx.cancel()
+  if (prefersReducedMotion()) {
+    $('#view')!.hidden = true
+    $('#hub')!.hidden = false
+    currentSection = null
+    menu.focusFirst()
+    navigating = false
+    return
+  }
+  exitView()
+  await wipeTransition(
+    () => {
+      $('#view')!.hidden = true
+      $('#hub')!.hidden = false
+      currentSection = null
+      navigating = false
+      // Start the menu slam UNDER the blade so it's already mid-entrance
+      // as the cut uncovers the hub — never an empty beat.
+      revealHub()
+      animateStats()
+      menu.focusFirst()
+    },
+    { title: 'COMMAND', kicker: 'MENU' },
+  )
+}
+
+function handleRoute(id: string) {
+  if (id === 'title') {
+    // The title screen owns the session until advanced; afterwards '' means menu.
+    if (booted) router.go('menu')
+    return
+  }
+  if (!booted) return
+  if (id === 'menu') {
+    if (currentSection !== null) void closeSection()
+    else enterHub()
+  } else {
+    void openSection(id)
+  }
+}
+
+/** Populate the document frame for `id` and reset the reveal choreography. */
+function setViewContent(id: string, sec: (typeof sections)[number]) {
+  $('#view-kicker')!.textContent = sec.title
+  $('#view-intro')!.textContent = sec.intro
+  $('#view-heading')!.textContent = sec.heading
+  $('#view-watermark')!.textContent = sec.heading.split(' ')[0].toUpperCase()
+  const body = $('#view-body')!
+  body.innerHTML = ''
+  renderSection(id, body)
+  currentSection = id
+}
+
+function init() {
+  startMotes($('#motes')!)
+  initSoundToggle()
+
+  // Gate the boot slam on Cinzel being ready so letters never flash a fallback face.
+  const start = () => void startSession()
+  if (document.fonts?.ready) void document.fonts.ready.then(start)
+  else start()
+}
+
+function startSession() {
+  if (booted) return
+  menu = new Menu((id) => router.go(id))
+  menu.render()
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && currentSection !== null && !navigating) void closeSection()
+  })
+
+  router = new Router(handleRoute)
+  const initial = parseHash()
+  const deepLinked = initial !== 'menu' && initial !== 'title'
+
+  if (Boot.wasBooted() || deepLinked) {
+    // Returning visitor, or a recruiter landing straight on a section:
+    // skip the ceremony entirely.
+    booted = true
+    new Boot(() => {}).skipInstant()
+    router.start()
+    if (parseHash() === 'title') router.go('menu')
+  } else {
+    router.start()
+    const boot = new Boot(() => {
+      booted = true
+      // Re-dispatch the current route: `go('menu')` alone would be deduped
+      // when the visitor already sits on #/menu (deep link straight to hub).
+      handleRoute(parseHash())
+    })
+    void boot.run()
+  }
+}
+
+init()

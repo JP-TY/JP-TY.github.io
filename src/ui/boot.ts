@@ -1,81 +1,145 @@
 /**
- * Boot sequence: typewriter TY-OS lines, skippable, once per session.
- * Resolves `done` when the terminal hands over the ship.
+ * James Ty Portfolio — title screen. Confident layered name-mark slam
+ * (outExpo, no elastic wobble) with a single gold shockwave ring as the hero
+ * flourish. Skippable; shown once per session.
  */
-import { bootLines, profile } from '../data/content'
 
-export class BootSequence {
-  private el = document.getElementById('boot') as HTMLDivElement
-  private text = document.getElementById('boot-text') as HTMLPreElement
-  private skipBtn = document.getElementById('boot-skip') as HTMLButtonElement
-  private skipped = false
-  private timers: number[] = []
-  readonly reducedMotion: boolean
-  private resolveDone!: () => void
-  readonly done: Promise<void>
+import { animate, createTimeline, stagger, utils } from 'animejs'
+import { sfx } from '../engine/audio'
+import { prefersReducedMotion } from './transitions'
 
-  constructor(reducedMotion: boolean) {
-    this.reducedMotion = reducedMotion
-    this.done = new Promise((res) => (this.resolveDone = res))
+const BOOT_KEY = 'tyr-booted'
 
-    const seen = sessionStorage.getItem('ty-stellar-booted')
-    if (seen || reducedMotion) {
-      this.finish(0)
-      return
+export class Boot {
+  private done = false
+  private pendingResolve: (() => void) | null = null
+
+  constructor(private onComplete: () => void) {}
+
+  async run() {
+    const boot = document.getElementById('boot')
+    if (!boot) return
+    const title = document.getElementById('boot-title')
+    const reduced = prefersReducedMotion()
+
+    if (title && !reduced) {
+      // Split into per-letter spans for the slam.
+      const text = title.textContent ?? 'James Ty Portfolio'
+      title.textContent = ''
+      for (const ch of text) {
+        const span = document.createElement('span')
+        span.className = 'boot-letter'
+        span.textContent = ch === ' ' ? '\u00A0' : ch
+        title.appendChild(span)
+      }
+      const letters = title.querySelectorAll<HTMLElement>('.boot-letter')
+      utils.set(letters, { opacity: 0, y: 70, scale: 1.35 })
+      const tl = createTimeline()
+      tl.add(
+        '.boot-crest',
+        { opacity: [0, 1], scale: [0.4, 1], rotate: [-30, 0], duration: 520, ease: 'outExpo' },
+        0,
+      )
+      tl.add(letters, {
+        opacity: [0, 1],
+        y: [70, 0],
+        scale: [1.35, 1],
+        duration: 640,
+        ease: 'outExpo',
+        delay: stagger(45, { start: 140 }),
+      })
+      // single hero flourish: one expanding gold shockwave ring as the name lands
+      const ring = document.createElement('div')
+      ring.className = 'boot-ring'
+      boot.appendChild(ring)
+      animate(ring, {
+        scale: [0.3, 2.6],
+        opacity: [0.85, 0],
+        duration: 1000,
+        delay: 980,
+        ease: 'outExpo',
+        onComplete: () => ring.remove(),
+      })
+      tl.add(
+        '.boot-rule',
+        { scaleX: [0, 1], opacity: [0, 1], duration: 700, ease: 'outExpo' },
+        '-=500',
+      )
+      tl.add(
+        '.boot-sub',
+        { opacity: [0, 1], y: [14, 0], duration: 500, ease: 'outExpo' },
+        '-=450',
+      )
+      tl.add(
+        '.boot-byline',
+        { opacity: [0, 1], y: [12, 0], duration: 500, ease: 'outExpo' },
+        '-=380',
+      )
+      tl.add(
+        '.boot-advance',
+        { opacity: [0, 1], duration: 400, ease: 'outQuad' },
+        '-=300',
+      )
+    } else {
+      boot.classList.add('boot-static')
     }
 
-    const lines = [...bootLines, `${profile.bootByline}`, '']
-    let delay = 300
-    const charDelay = 14
-    const lineDelay = 260
-
-    lines.forEach((line, li) => {
-      if (!line) {
-        delay += lineDelay
-        return
-      }
-      for (let c = 0; c <= line.length; c++) {
-        const snapshot = li
-        const slice = c
-        this.timers.push(
-          window.setTimeout(() => {
-            // Rebuild the full text up to this point.
-            let out = ''
-            for (let j = 0; j < snapshot; j++) out += (lines[j] || '') + '\n'
-            out += lines[snapshot].slice(0, slice)
-            this.text.textContent = out
-          }, delay)
-        )
-        delay += charDelay
-      }
-      delay += lineDelay
-    })
-
-    const total = delay + 400
-    this.timers.push(window.setTimeout(() => this.finish(500), total))
-
-    this.skipBtn.addEventListener('click', () => this.finish(200))
-    window.addEventListener('keydown', this.onKey)
-    window.addEventListener('pointerdown', this.onKey)
+    this.armSkip()
   }
 
-  private onKey = (): void => {
-    this.finish(200)
+  /** Wire up skip: any key, click, or the advance button. */
+  private armSkip() {
+    const boot = document.getElementById('boot')
+    if (!boot) return
+    const advance = () => {
+      if (this.done) return
+      this.done = true
+      sfx.confirm()
+      try {
+        sessionStorage.setItem(BOOT_KEY, '1')
+      } catch {
+        /* private mode: boot simply always shows */
+      }
+      const finish = () => {
+        boot.hidden = true
+        this.pendingResolve?.()
+        this.onComplete()
+      }
+      if (prefersReducedMotion()) {
+        finish()
+      } else {
+        animate('.boot-inner', {
+          opacity: [1, 0],
+          scale: [1, 1.06],
+          duration: 320,
+          ease: 'inQuad',
+          onComplete: finish,
+        })
+      }
+    }
+
+    document.getElementById('boot-advance')?.addEventListener('click', advance)
+    document.addEventListener('keydown', advance, { once: true })
+    document.addEventListener('pointerdown', advance, { once: true })
   }
 
-  private finish(fadeMs: number): void {
-    if (this.skipped) return
-    this.skipped = true
-    for (const t of this.timers) clearTimeout(t)
-    window.removeEventListener('keydown', this.onKey)
-    window.removeEventListener('pointerdown', this.onKey)
-    sessionStorage.setItem('ty-stellar-booted', '1')
-    // Show the full log instantly on skip.
-    this.text.textContent = bootLines.join('\n') + '\n' + profile.bootByline
-    this.el.classList.add('done')
-    window.setTimeout(() => {
-      this.el.remove()
-      this.resolveDone()
-    }, fadeMs)
+  /** Immediately show the hub (deep links / returning visitors). */
+  skipInstant() {
+    this.done = true
+    const boot = document.getElementById('boot')
+    if (boot) boot.hidden = true
+    try {
+      sessionStorage.setItem(BOOT_KEY, '1')
+    } catch {
+      /* ignore */
+    }
+  }
+
+  static wasBooted(): boolean {
+    try {
+      return sessionStorage.getItem(BOOT_KEY) === '1'
+    } catch {
+      return false
+    }
   }
 }

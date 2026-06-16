@@ -1,63 +1,208 @@
-# Design
+---
+name: TY.OS Retro Phosphor
+description: Amber-voiced retro-futurist terminal portfolio with LED-matrix ancestor boot for James Ty
+colors:
+  amber-voice: "#F5B544"
+  amber-hot: "#FFD97A"
+  abysmal-ink: "#0A0C10"
+  console-panel: "#12100B"
+  raised-hull: "#1C170C"
+  hull-hairline: "#3A2F18"
+  signal-ivory: "#F5ECD7"
+  dim-readout: "#B3A67F"
+typography:
+  display:
+    fontFamily: "Chakra Petch, Arial Narrow, sans-serif"
+    fontSize: "clamp(3rem, 9vw, 6rem)"
+    fontWeight: 700
+    lineHeight: 1.05
+    letterSpacing: "0.04em"
+  headline:
+    fontFamily: "Chakra Petch, Arial Narrow, sans-serif"
+    fontSize: "clamp(1.75rem, 3.5vw, 2.5rem)"
+    fontWeight: 700
+    lineHeight: 1.1
+  body:
+    fontFamily: "Source Serif 4, Georgia, serif"
+    fontSize: "1rem"
+    fontWeight: 400
+    lineHeight: 1.65
+  label:
+    fontFamily: "JetBrains Mono, ui-monospace, monospace"
+    fontSize: "0.8125rem"
+    fontWeight: 600
+    letterSpacing: "0.14em"
+rounded:
+  sm: "3px"
+  pill: "20px"
+spacing:
+  xs: "4px"
+  sm: "8px"
+  md: "12px"
+  lg: "16px"
+  xl: "24px"
+  2xl: "32px"
+  3xl: "48px"
+components:
+  button-primary:
+    backgroundColor: "{colors.abysmal-ink}"
+    textColor: "{colors.amber-voice}"
+    rounded: "{rounded.sm}"
+    padding: "12px 24px"
+  menu-row-active:
+    backgroundColor: "{colors.raised-hull}"
+    textColor: "{colors.signal-ivory}"
+    rounded: "{rounded.sm}"
+    padding: "12px"
+  chip:
+    backgroundColor: "{colors.abysmal-ink}"
+    textColor: "{colors.dim-readout}"
+    rounded: "{rounded.pill}"
+    padding: "6px 10px"
+---
 
-## Theme
+# Design System: TY.OS Retro Phosphor
 
-A serious portfolio with an Atlus-inspired interface: charcoal darkness, ivory text, one dominant gold accent system. Dark theme only. Mood: precise, confident, quietly stylish — the game inspiration lives entirely in **layout, color, and motion**, never in copy. Reference DNA: Metaphor: ReFantazio's UI (Koji Ise, GDC 2025) — one dominant color, central gaze lines, angle + contrast for context, info always on the bright side of the composition.
+## 1. Overview
 
-## Color Palette
+**Creative North Star: "The Ancestral Terminal"**
 
-All body text ≥ 4.5:1 on base. Gold is THE color (Persona 5's lesson: one dominant color, no competing accents); crimson is earned, rare, meaningful.
+A retro-futurist phosphor console: full amber voice on near-black, LED-matrix texture everywhere (grain motes, grid hairlines, full-screen scanlines, phosphor glow on display type). Game craft carries the frame; prose stays senior-engineer serious. The system explicitly rejects the previous teal-only pass, gold-on-charcoal Atlus identity, purple-gradient AI slop, glassmorphism, and any roleplay vocabulary.
 
-| Token | Value | Role |
-|---|---|---|
-| `--charcoal` | `#250505` | Page background — sampled from the game's red-black grounds (GUD swatch `#250505`) |
-| `--panel` | `#2a0606` | Panel/menu surface — the game's dominant oxblood red (`#2a0606`) |
-| `--panel-2` | `#340707` | Raised surface, hover fills (richer blood-red, sampled `#340707`) |
-| `--line` | `#54191d` | Hairlines, frame borders (dried-blood maroon) |
-| `--dim` | `#c9b291` | Secondary text (parchment, ≥ 4.5:1 on charcoal) |
-| `--ivory` | `#f6efdd` | Primary text (aged cream) |
-| `--gold` | `#c9a13e` | THE accent: frames, headings, cursor, focus rings — royal gold linework over red |
-| `--gold-bright` | `#f0d078` | Hover/active gold, highlights |
-| `--gold-deep` | `#8f6617` | Gold shadows, pressed states |
-| `--crimson` | `#c22a34` | Crimson: menu-selection wash (the game marks active rows in blood-red), rare emphasis, errors |
+Motion is choreographed but calm: one orchestrated entrance per view, staggered reveals, grid-zoom view changes. Exits run faster than entrances. Reduced motion collapses everything to instant and every canvas to a static frame.
 
-Anti-pattern: purple-gradient-on-white, glassmorphism, soft drop shadows on cards. Depth comes from engraved line-work, corner ornaments, layered gold borders, and diagonal geometry — never blur.
+**Key Characteristics:**
+- Full amber voice, zero exceptions
+- Ancestor effigy burns behind the boot copy, nowhere else
+- Scanlines plus grain plus grid plus vignette: texture is the atmosphere
+- Corner brackets, LED-dot dividers, blinking cursor, turn-on flash: CRT grammar on every surface
+- Timeline rail for experience as hero track
+- Flat tonal depth with phosphor glow, no decorative shadows
 
-## Typography
+## 2. Colors
 
-Three faces, committed. Loaded via Google Fonts with `font-display: swap`.
+Single-phosphor strategy: warm amber carries the entire interface, links included.
 
-| Face | Use | Notes |
-|---|---|---|
-| `Cinzel` | Display: name-mark, section headings, menu commands | Engraved Trajan-style caps — the one overtly "game" note, kept formal |
-| `EB Garamond` | Body: long-form prose | Bookish serif; italic for emphasis lines |
-| `Archivo` | UI labels: small-caps tracking, stats, badges, buttons | The modern pop layer — Ise's "modern fonts on classical art" blend |
+### Primary
+- **Amber Voice** (#F5B544, hot #FFD97A): kickers, stats, menu cursor and active states, timeline rail, awards, focus rings, boot title and advance. The brand (11.2:1 on ink).
 
-Scale: `--fs-title: clamp(3rem, 9vw, 7rem)` · `--fs-h2: clamp(1.75rem, 3.5vw, 2.5rem)` · `--fs-body: 1rem` · `--fs-ui: 0.8125rem`. Measure ≤ 68ch. Line-height 1.6 body, 1.05 display. Letter-spacing: Archivo labels +0.14em, Cinzel display +0.02em.
+### Secondary
+- Retired. A prior teal signal role was fully purged; every accent is amber.
 
-## Components
+### Neutral
+- **Abysmal Ink** (#0A0C10): page background, warm-tinted black.
+- **Console Panel** (#12100B): menu and document surfaces.
+- **Raised Hull** (#1C170C): hover fills, raised nodes.
+- **Hull Hairline** (#3A2F18): borders, grid lines.
+- **Signal Ivory** (#F5ECD7): primary text.
+- **Dim Readout** (#B3A67F): secondary text, holds AA on ink and panel.
 
-- **Command menu**: left-anchored primary nav; gold cursor glyph; selected row grows right with gold-bright fill sweep; staggered slam-in on open
-- **Profile card**: right-side summary — NAME, ROLE, AFFILIATIONS, FOCUS, plus PROJECTS / AWARDS / CERTS counters
-- **Section view**: full-viewport document panel (max-width 900px, 92vw mobile) with double gold frame, corner ornaments, scroll inside panel only
-- **Status strip**: bottom bar — LOCATION · EDUCATION · contact micro-links, Archivo small-caps
-- **Wipe overlay**: the **blade cut**, read like a Metaphor chapter card — a charcoal base band drops the lights, gold + charcoal slabs slice across at −12° behind a bright blade edge and racing glint; at the covered moment an ivory cut-flash fires, a gold seam diamond blooms at centre, and the destination name types in letter-by-letter on a charcoal plate riding the blade; the blade then continues out the far side while the fresh scene reveals underneath (signature transition)
-- **Atmosphere**: candle-glow radial bloom top-center + faint diagonal hairline patterning on the vignette layer — static depth behind solid panels
-- **Toggle buttons**: `[ SOUND: OFF ]` bracket-style, 44px targets
-- **Ambience canvas**: aria-hidden three-layer parallax — drifting ember motes, diagonal gold hairline streaks, large slow-rotating hollow diamonds; subtle pointer parallax; renders one static frame under reduced motion
+### Named Rules
+**The Amber Voice Rule.** Amber is the only voice color. If an element needs emphasis, it is amber. No second hue exists.
 
-## Layout
+## 3. Typography
 
-Full-viewport "screens" (title → hub → section), hash-routed, not a scrolling page. Asymmetric Atlus composition: menu weight left, profile card right, gaze lines draw the eye to the bright (ivory/gold) side. Decorative canvas layers aria-hidden; safe-area insets + 24px chrome margin; single-column stack under 720px.
+**Display Font:** Chakra Petch (with Arial Narrow)
+**Body Font:** Source Serif 4 (with Georgia)
+**Label/Mono Font:** JetBrains Mono (with ui-monospace)
 
-## Motion
+**Character:** Amber-terminal phosphor meets museum caption. Display type carries a soft amber glow; body stays calm serif; mono carries readouts. Faces chosen over reflex-reject defaults (Space Grotesk, IBM Plex family, Fraunces).
 
-Energy: **precise slams, calm idle** (anime.js v4: `animate`, `createTimeline`, `createTimer`, `stagger`, `utils`, `createSpring`).
+### Hierarchy
+- **Display** (700, clamp(3rem, 9vw, 6rem), 1.05): boot title and save headings only, amber-hot with phosphor glow.
+- **Headline** (700, clamp(1.75rem, 3.5vw, 2.5rem), 1.1): view headings with faint amber glow.
+- **Title** (600, 1.125rem, 1.3): project names, timeline roles.
+- **Body** (400/500, 1rem, 1.65, max 68ch): evidence paragraphs, compensated for dark background.
+- **Label** (600, 0.8125rem, +0.14em tracking, uppercase): kickers, stats, buttons.
 
-- Title: per-letter **layered slam** (fast fall + settle, no elastic) with one expanding gold shockwave ring as the single hero flourish. Skippable, sessionStorage once
-- Menu: items slam in staggered (50–70ms), hover = lightly damped spring scale + cursor slide + SFX (damping raised to kill overshoot — no bounce)
-- View change: **blade cut** — slabs sweep in `outExpo` (~380ms, 230ms internal), ivory cut-flash + seam diamond + letter-by-letter name plate at the covered moment, the outgoing scene flees the blade, exit continues out the far side ~75% of enter time; navigation is coalesced so a cut never restarts mid-swing; content swaps under cover
-- Section entrance: heading letters rise, frame drifts in, the section name settles as an engraved corner watermark, content staggers up
-- Counters: `createTimer`-driven stat rolls; micro-interactions 150–300ms
-- Idle: three-layer ambience drifts slowly (motes, streaks, rotating diamonds); nothing else moves
-- Laws (animate.md): one orchestrated entrance per view, transform/opacity only, exits faster than entrances, no elastic/bounce, reduced motion always honored
+### Named Rules
+**The Roman Headers Rule.** Headings are always roman, never italic. Emphasis via weight or amber, never gradient text.
+**The Glow Budget Rule.** Glow lives on display type, stat numerals, and the boot advance only. Body copy never glows.
+
+## 4. Elevation
+
+Flat by default. Depth comes from tonal layering (ink over panel over hull), 1px hairlines, phosphor glow on accents, and full-screen scanlines. No decorative blur shadows.
+
+### Named Rules
+**The Flat-By-Default Rule.** Surfaces are flat at rest. Glow appears only as phosphor voice (display type, active states, focus) never as shadow decoration.
+
+## 5. Components
+
+### Buttons
+- **Shape:** gently squared edges (3px radius)
+- **Primary:** ink background, amber text and border, amber glow, 12px 24px padding
+- **Hover / Focus:** amber-dim fill on hover; 2px amber focus-visible ring with offset
+- **Secondary:** borderless menu rows; active row gets hull fill plus amber border plus inner glow
+
+### Chips
+- **Style:** ink background, dim text, hairline border, pill radius
+- **State:** static metadata only, no selected variant
+
+### Cards / Containers
+- **Corner Style:** squared edges (3px radius)
+- **Background:** panel for the save slot; ink for system blocks and detail panels; pages float free over the global ambience
+- **Shadow Strategy:** none, flat by default; glow only on amber accents
+- **Border:** 1px hull hairline; amber only for active states
+- **Internal Padding:** page screens breathe full-viewport (see Page screen); cards keep 24px
+
+### Inputs / Fields
+- **Style:** no text inputs in this build; slot and node buttons use 44px minimum targets
+- **Focus:** amber ring, consistent across all interactive elements
+- **Error / Disabled:** danger red reserved for errors; no disabled states ship
+
+### Navigation
+- Minimized index over a solar-system menu: planets are click portals with hover ignition, backed by a slim edge tab. Mousing to the left edge or tabbing to the tab slides in the grand-menu drawer: skewed display rows with amber slab sweeps and mono indices. Full game controls: arrows or WASD/HJKL move, Enter confirms, digits 1-6 quick-travel from anywhere in the app, I toggles the drawer, ESC closes or returns. Arrow keys also hop between skill hexes directionally. The drawer is inert and invisible when closed. Sticky sysbar and status strip frame everything.
+
+### Dream (menu signature)
+- Full-bleed solar system in bright amber dot-matrix, centered on a proper dithered sun (boiling granulation disc, dark sunspot umbrae with bright rims, bright limb, hugging corona rings, rotating flare arcs, slow tick ring, deep halo) with six large page-planets turning as a slow carousel (one shared tilt and speed, even phases on wide orbits 0.34 to 0.99, so the formation keeps clear space while it moves; the relax pass also holds planet centers out of the solar disc) with crescent phases and character (soft drifting bands with a round beacon glint on the experience world, twin rings, a moon, periodic comet), each carrying a strong glow halo plus dotted halo ring so the system is the unmistakable focus, each wired to the center by its own spoke with traveling pulses. The spiral sprawls corner to corner across the whole page. Tags are big bold 15px numbered labels (`01 · PROFILE`, `> 04 · EXPERIENCE` when locked), each anchored radially outward from the sun with a dotted leader line, shadowed for contrast, and deconflicted every frame against the sun, discs, and other tags so text is never covered. Taps map through CSS/backing-store size, carry a fat-finger floor with nearest-match, and ignite on touchstart. Planets and their labels are click portals; arrows hop the lit planet with Enter to land, digits quick-travel, hovering or focusing either end (planet or drawer row) ignites the pair. Ignition scales the planet 1.22x, fires a rotating dotted lock ring with corner targeting brackets plus a dotted tag underline, and spotlights the rest dim. Separation relaxation is a safety net that keeps clear space around discs, rings, and moons. The menu type scales with viewport height so the whole index fits without scrolling; the left shade keeps type readable. Static frame under reduced motion with hover relight intact; the loop stops when a page opens.
+
+### Favicon (tab signature)
+- The tab icon is a live 48px black hole: rotating Doppler-split accretion band, shadow, and photon ring, redrawn several times per second into the icon link. Pauses while the tab hides; static under reduced motion; the inline SVG remains the fallback.
+
+### Page screen
+- Full-viewport page: RETURN button plus kicker up top, display heading, intro, then the section body at a 1080px measure. Same content renderers as before, more air. Corner brackets survive only on the save slot and portrait frame.
+
+### Save Slot
+- Panel card with mono metadata and amber stat numerals. Hover and focus shift border to amber with glow and raise the surface. Single slot; scales to more without layout change.
+
+### Skill constellation (skills signature)
+- The skills page is full-bleed: the constellation fills its region with the evidence panel docked beside it, so no overlay ever blocks a node. The whole map is constructed the way the boot hole is made: hexagon outlines, Lucide glyphs, and the JTY monogram are all drawn dot-by-dot on canvas through an animated Bayer threshold, with pulses traveling the core traces. Model coordinates live in a fixed 920x600 space mapped onto any container; node sizes stay in device pixels so drawn hexes always match their hit-areas. Transparent DOM buttons sit exactly over the drawn hexes for click, hover, keyboard, and focus, and drive a shared hover state the canvas reads every frame. Selecting any node lights its whole branch and loads the docked panel while inactive branches dim to a whisper; a sonar pulse rings the selected anchor and a hint bar counts nodes and branches. Labels stay crisp DOM text. Keyboard operable throughout with directional d-pad hops between hexes and visible focus intact. Both canvas loops stop dead on route change and render static frames under reduced motion.
+
+### Field Portrait (profile signature)
+- The field photo re-graded as smooth amber phosphor: luminance mapped through a warm duotone ramp with a gentle contrast curve, baked scanlines, soft vignette, and a slow scan band. The face stays fully recognizable with zero quantization artifacting. Framed with corner brackets. Static frame under reduced motion; the plain photo stays visible if canvas or the image fails.
+
+### Amber Ancestor (boot signature)
+- Scaled-up canvas black hole rendered as a boiling ASCII/dot-matrix hybrid: analytic glow field (halo, Doppler-limbed band with differential rotation and breathing tilt, shadow core, photon ring, lensed arcs, front pass) quantized through a time-jittered Bayer threshold, bright cells mutating ASCII glyphs and dim cells LED dots, plus rolling CRT band and corner telemetry. Burns behind the boot copy under a contrast shade at ~30fps. Starts on boot, stops dead on finish. Static single frame under reduced motion. Aria-hidden; never carries content.
+
+### Trophy shelf (recognition signature)
+- Awards render as tiered trophies: gold for championships and top honors, silver for runners-up, bronze for mentions, each with its own medal glyph and glow weight. A filter row (all, top honors, runners-up, mentions) narrows the shelf with instant hide; buttons carry aria-pressed. Hover lifts the trophy. Keyboard operable throughout.
+
+### Badge case (recognition signature)
+- Certifications live in a closed case: a lid button showing the credential count toggles the badge grid with a grid-rows unfold. Badges are numbered phosphor discs with names. Lid carries aria-expanded; content hides again on close. Instant under reduced motion.
+
+### Scanlines (global texture)
+- Fixed full-screen repeating gradient, pointer-events none, below content chrome. The grain motes canvas and hairline grid sit beneath it, joined by a slow aurora layer: two drifting amber glow blobs on minute-long loops. A soft vignette darkens the frame edges above the ambience but below content. All decorative layers are aria-hidden.
+
+### CRT grammar (signature details)
+- Corner brackets: amber L-ticks on the save slot and portrait frame.
+- LED-dot dividers: dotted amber rule under view and save headings.
+- Kicker prefix `[ :: ]` on view and save headings.
+- Blinking block cursor on the boot log; rare phosphor flicker on the sysbar brand.
+- Turn-on flash: a bright line expands and dies on every view change inside the veil. Timeline stops mark as glowing amber diamonds, never dots. All motion collapses under reduced motion.
+
+## 6. Do's and Don'ts
+
+### Do:
+- **Do** use amber for everything carrying emphasis: voice, frames, cursor, focus, stats, awards, headings glow, links, active states.
+- **Do** keep copy recruiter-serious; game feel lives in geometry and motion only.
+- **Do** give experience a timeline rail with period, role, and 2 bullets per stop.
+- **Do** honor `prefers-reduced-motion` with instant swaps and static canvas frames.
+
+### Don't:
+- **Don't** reuse charcoal `#250505`, royal gold, Cinzel/EB Garamond, or the blade-cut wipe from the previous build.
+- **Don't** use purple gradients on white, glassmorphism, side-stripe borders (>1px colored border-left), gradient text, or identical card grids.
+- **Don't** write roleplay copy (quest, trophy, summon, HP, lore, press-start energy).
+- **Don't** pick reflex-reject fonts (Space Grotesk, IBM Plex family, Fraunces, Inter, etc.) or drift into editorial-magazine defaults.
+- **Don't** animate layout properties; transform and opacity only, no bounce or elastic.
+- **Don't** introduce a second hue; teal was fully retired from the system.
+- **Don't** splash amber glow on body copy.

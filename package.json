@@ -1,9 +1,9 @@
 {
   "name": "jp-ty.github.io",
   "private": true,
-  "version": "2.0.0",
+  "version": "3.0.0",
   "type": "module",
-  "description": "TY ROYALE — an Atlus-inspired JRPG portfolio for James Gabriel Elijah Ty",
+  "description": "TY.OS — save-select boot, tactical HUD frame, skill-tree grid portfolio for James Ty",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -11,10 +11,10 @@
     "qa": "node scripts/qa.mjs"
   },
   "dependencies": {
-    "animejs": "^4.0.2"
+    "animejs": "^4.0.2",
+    "lucide": "^1.42.0"
   },
   "devDependencies": {
-    "playwright": "^1.62.1",
     "typescript": "~5.7.2",
     "vite": "^6.0.0"
   }

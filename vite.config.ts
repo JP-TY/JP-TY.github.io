@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 
-// Served at https://jpty.github.io/ (user site = root), so base stays '/'.
+// User site served at root (jpty.me / JP-TY.github.io), so base stays '/'.
 export default defineConfig({
   base: '/',
   build: {

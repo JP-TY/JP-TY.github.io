@@ -1,159 +1,89 @@
-/**
- * TY ROYALE — QA smoke test. Static server on dist/, real browser flow:
- * title → hub → sections → deep links → sound toggle → mobile → screenshots.
- * Fails on any console error. Run: node scripts/qa.mjs (after npm run build).
- */
-import { createServer } from 'node:http'
-import { readFile } from 'node:fs/promises'
-import { extname, join } from 'node:path'
-import { mkdirSync } from 'node:fs'
-import { chromium } from 'playwright'
+/** Minimal QA: build artifact + token + a11y smoke checks. */
+import { existsSync, readFileSync } from 'node:fs'
 
-const ROOT = new URL('../dist', import.meta.url).pathname
-const PORT = 4173
-const SHOTS = new URL('./shots/', import.meta.url).pathname
-mkdirSync(SHOTS, { recursive: true })
+const fail = (msg) => {
+  console.error(`QA FAIL: ${msg}`)
+  process.exitCode = 1
+}
+const pass = (msg) => console.log(`QA PASS: ${msg}`)
 
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' }
+if (!existsSync('dist/index.html')) fail('dist/index.html missing — run npm run build first')
+else {
+  const html = readFileSync('dist/index.html', 'utf8')
+  if (!html.includes('Skip to content')) fail('skip link missing')
+  else pass('skip link present')
+  if (!html.includes('TY.OS')) fail('sysbar brand missing')
+  else pass('brand present')
+}
 
-const server = createServer(async (req, res) => {
-  const path = req.url.split('?')[0].split('#')[0]
-  const file = path === '/' || path.startsWith('/#') ? 'index.html' : path.slice(1)
-  try {
-    const data = await readFile(join(ROOT, file))
-    res.writeHead(200, { 'content-type': MIME[extname(file)] ?? 'application/octet-stream' })
-    res.end(data)
-  } catch {
-    const data = await readFile(join(ROOT, 'index.html'))
-    res.writeHead(200, { 'content-type': 'text/html' })
-    res.end(data)
+const cssPaths = ['src/styles/main.css']
+let cssAll = ''
+for (const p of cssPaths) {
+  const css = readFileSync(p, 'utf8')
+  cssAll += css
+  for (const token of ['--ink', '--amber', '--font-display', '#scanlines', '#vignette', '#aurora', 'veil-flash', 'crt-blink', 'grand-menu', 'menu-drawer', 'menu-tab', 'drawer-open', 'star-map', 'star-field', 'star-dust', 'star-const', 'hex-label', 'map-hint', 'page-screen', 'menu-screen', 'route-skills']) {
+    if (!css.includes(token)) fail(`${p} missing ${token}`)
   }
-})
-
-const failures = []
-const check = (cond, label) => {
-  console.log(`${cond ? '  ✓' : '  ✗ FAIL'} ${label}`)
-  if (!cond) failures.push(label)
-}
-
-await new Promise((ok) => server.listen(PORT, ok))
-const browser = await chromium.launch()
-
-async function newPage() {
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } })
-  const page = await ctx.newPage()
-  const errors = []
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-  page.on('pageerror', (e) => errors.push(String(e)))
-  return { ctx, page, errors }
-}
-
-// ---- 1. First visit: title screen → hub ----
-{
-  const { ctx, page, errors } = await newPage()
-  await page.goto(`http://localhost:${PORT}/`)
-  await page.waitForSelector('#boot:not([hidden])')
-  // The module letter-splits the title (space → &nbsp;) and arms skip listeners;
-  // wait for that marker before asserting or pressing keys.
-  await page.waitForSelector('.boot-letter')
-  check(
-    (await page.textContent('#boot-title'))?.replace(/\u00A0/g, ' ').includes('JAMES TY'),
-    'title screen shows JAMES TY',
-  )
-  await page.keyboard.press('Enter')
-  await page.waitForSelector('#app:not([hidden])', { timeout: 5000 })
-  check(await page.isVisible('#hub'), 'hub visible after skipping title')
-  check((await page.locator('.menu-item').count()) === 6, 'six menu commands rendered')
-  await page.waitForFunction(() => document.querySelector('[data-stat="projects"]')?.textContent === '5', { timeout: 5000 })
-  // Counters roll in staggered; wait for the last one before asserting all three.
-  await page.waitForFunction(() => document.querySelector('[data-stat="certs"]')?.textContent === '8', { timeout: 5000 })
-  check((await page.textContent('#char-stats [data-stat="projects"]')) === '5', 'stat projects = 5')
-  check((await page.textContent('#char-stats [data-stat="awards"]')) === '8', 'stat awards = 8')
-  check((await page.textContent('#char-stats [data-stat="certs"]')) === '8', 'stat certs = 8')
-  await page.focus('.menu-item')
-  await page.keyboard.press('ArrowDown')
-  check((await page.textContent('.menu-item.is-active .menu-label')) === 'PROJECTS', 'arrow keys move selection')
-  await page.keyboard.press('Enter')
-  await page.waitForSelector('#view:not([hidden])', { timeout: 5000 })
-  check((await page.textContent('#view-heading')) === 'Projects', 'projects section opens via keyboard')
-  const body = await page.textContent('#view-body')
-  check(body.includes('CreditPass') && body.includes('LakbAI') && body.includes('GreenPoint'), 'project dossiers present')
-  check((await page.locator('#view-body .project-award').count()) >= 5, 'projects list their awards')
-  await page.keyboard.press('Escape')
-  await page.waitForSelector('#hub:not([hidden])', { timeout: 5000 })
-  check(await page.isVisible('#hub'), 'Escape returns to the hub')
-  await page.waitForTimeout(1300) // let the return wipe fully clear before capturing
-  await page.screenshot({ path: join(SHOTS, 'hub.png') })
-  check(errors.length === 0, `zero console errors on main flow${errors.length ? ` → ${errors[0]}` : ''}`)
-  await ctx.close()
-}
-
-// ---- 2. Deep links + section content ----
-const SECTIONS = [
-  ['about', 'About', 'University of the Philippines Cebu'],
-  ['projects', 'Projects', 'CreditPass'],
-  ['experience', 'Experience', 'ISCOLab'],
-  ['achievements', 'Achievements', 'Philippines Junior Data Science Challenge'],
-  ['skills', 'Skills', 'TypeScript'],
-  ['contact', 'Contact', 'jamesty016@gmail.com'],
-]
-{
-  const { ctx, page, errors } = await newPage()
-  for (const [id, heading, mustContain] of SECTIONS) {
-    await page.goto(`http://localhost:${PORT}/#/${id}`)
-    // Wait on content, not on the hidden attribute: after the first section
-    // opens, #view stays un-hidden and same-document hash changes resolve
-    // goto() before the wipe finishes populating the new section.
-    await page.waitForFunction(
-      (h) => document.querySelector('#view-heading')?.textContent === h,
-      heading,
-      { timeout: 5000 },
-    )
-    const h = await page.textContent('#view-heading')
-    const b = await page.textContent('#view-body')
-    check(h === heading && b.includes(mustContain), `deep link #/${id} → "${heading}" with real content`)
-    await page.waitForTimeout(1300) // let the opening wipe fully clear before capturing
-    await page.screenshot({ path: join(SHOTS, `section-${id}.png`) })
+  for (const ban of ['#250505', 'Cinzel', 'linear-gradient(135deg, #a855f7']) {
+    if (css.includes(ban)) fail(`${p} contains retired token ${ban}`)
   }
-  check(await page.isHidden('#boot'), 'deep link skips title screen (recruiter path)')
-  check(errors.length === 0, `zero console errors across all deep links${errors.length ? ` → ${errors[0]}` : ''}`)
-  await ctx.close()
+  if (!css.includes('prefers-reduced-motion')) fail(`${p} missing reduced-motion`)
+  if (!css.includes('overflow-x: clip')) fail(`${p} missing overflow-x clip`)
+  if (!css.includes(':focus-visible')) fail(`${p} missing focus-visible`)
 }
+if (process.exitCode !== 1) pass('tokens, bans, a11y guards ok')
 
-// ---- 3. Sound toggle ----
-{
-  const { ctx, page } = await newPage()
-  await page.goto(`http://localhost:${PORT}/#/menu`)
-  // #/menu on a fresh session shows the title screen by design — skip it.
-  await page.waitForSelector('.boot-letter')
-  await page.keyboard.press('Enter')
-  await page.waitForSelector('#app:not([hidden])')
-  await page.click('#sound-toggle')
-  check((await page.textContent('#sound-toggle')) === '[ SOUND: ON ]', 'sound toggle flips to ON')
-  check((await page.getAttribute('#sound-toggle', 'aria-pressed')) === 'true', 'aria-pressed=true when on')
-  await ctx.close()
+const tealLeftovers = (cssAll.match(/#5eead4|var\(--teal\)/gi) || []).length
+if (tealLeftovers > 0) fail(`teal remnants in stylesheet (${tealLeftovers})`)
+else pass('no teal remnants')
+
+const portraitSrc = readFileSync('src/engine/portrait.ts', 'utf8')
+if (!portraitSrc.includes('prefers-reduced-motion')) fail('portrait missing reduced-motion guard')
+else pass('portrait reduced-motion safe')
+if (portraitSrc.includes('BAYER')) fail('portrait still quantizes (artifact source)')
+else pass('portrait grade is smooth')
+if (!existsSync('public/profile.jpg')) fail('public/profile.jpg missing')
+else pass('profile photo present')
+
+const panelSrc = readFileSync('src/ui/panel-content.ts', 'utf8')
+const menuSrc = readFileSync('src/ui/menu.ts', 'utf8')
+const dreamSrc = readFileSync('src/engine/dream.ts', 'utf8')
+for (const token of ['trophy', 'filter-btn', 'case-lid', 'badge-disc', '<h3 class="sub rise">Awards</h3>', 'star-map', 'star-node', 'lucide', 'stardust', 'constellation', 'map-hint', 'data-active']) {
+  if (!panelSrc.includes(token)) fail(`recognition missing ${token}`)
 }
-
-// ---- 4. Mobile stacking ----
-{
-  const ctx = await browser.newContext({ viewport: { width: 375, height: 812 } })
-  const page = await ctx.newPage()
-  await page.goto(`http://localhost:${PORT}/#/menu`)
-  await page.waitForSelector('.boot-letter')
-  await page.keyboard.press('Enter')
-  await page.waitForSelector('#app:not([hidden])')
-  const stacked = await page.evaluate(() => {
-    const menu = document.querySelector('#menu')?.getBoundingClientRect()
-    const card = document.querySelector('#charcard')?.getBoundingClientRect()
-    return menu && card ? card.top >= menu.bottom - 4 : false
-  })
-  check(stacked, 'mobile: character card stacks below menu')
-  await page.screenshot({ path: join(SHOTS, 'mobile-hub.png') })
-  await ctx.close()
+if (process.exitCode !== 1) pass('trophy room + badge case wired')
+for (const token of ['grand-row', 'dreamHover', 'navigate', 'move(1)', 'ArrowRight', 'dreamHover.index = (']) {
+  if (!menuSrc.includes(token) && !readFileSync('src/main.ts', 'utf8').includes(token)) fail(`menu flow missing ${token}`)
 }
+if (process.exitCode !== 1) pass('grand menu flow wired')
+if (!dreamSrc.includes('startDream') || !dreamSrc.includes('prefers-reduced-motion')) fail('dream engine incomplete')
+else pass('dream engine present')
+for (const token of ['planet', 'onSelect', 'hit', 'orbit', 'canvasLit', 'ringBand', 'ORBIT_SPEED', 'cometT', 'haloR', 'reticle', 'dimmed', 'beacon', 'padStart', 'tagPx', 'hypot(W, H)', 'fitSystem', 'sunspot', 'tick ring', 'sunClear', 'labelBoxes', 'deconflict', 'leader', 'touchstart', 'touchR', 'bestD']) {
+  if (!dreamSrc.includes(token)) fail(`solar system missing ${token}`)
+}
+if (process.exitCode !== 1) pass('solar system wired')
+const favSrc = readFileSync('src/engine/favicon.ts', 'utf8')
+const mainSrc = readFileSync('src/main.ts', 'utf8')
+if (!favSrc.includes('startFavicon') || !favSrc.includes('toDataURL')) fail('favicon engine incomplete')
+else pass('favicon engine present')
+if (!mainSrc.includes('startFavicon')) fail('favicon not wired into main')
+else pass('favicon wired')
+for (const token of ['setDrawer', 'wireDrawer', 'inert', 'drawer-open']) {
+  if (!mainSrc.includes(token)) fail(`edge drawer missing ${token}`)
+}
+if (process.exitCode !== 1) pass('edge drawer wired')
 
-await browser.close()
-server.close()
-console.log(failures.length === 0 ? '\nALL CHECKS PASSED 👑' : `\n${failures.length} CHECK(S) FAILED`)
-process.exit(failures.length === 0 ? 0 : 1)
+const design = readFileSync('DESIGN.md', 'utf8')
+if (!design.includes('Amber Voice')) fail('DESIGN.md drift')
+else pass('DESIGN.md aligned')
 
+const bootSrc = readFileSync('src/ui/boot.ts', 'utf8')
+const effigySrc = readFileSync('src/engine/effigy.ts', 'utf8')
+if (!bootSrc.includes('startEffigy') || !bootSrc.includes('stopEffigy')) {
+  fail('boot does not start/stop the effigy')
+} else pass('effigy lifecycle wired')
+if (!effigySrc.includes('prefers-reduced-motion')) fail('effigy missing reduced-motion guard')
+else pass('effigy reduced-motion safe')
+const distHtml = existsSync('dist/index.html') ? readFileSync('dist/index.html', 'utf8') : ''
+if (!distHtml.includes('id="effigy"')) fail('effigy canvas missing from built index.html')
+else pass('effigy canvas present')

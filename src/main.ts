@@ -1,213 +1,255 @@
-/**
- * James Ty Portfolio — orchestrator. Title screen, hash router, command menu,
- * section documents, stat counters, sound toggle, keyboard shortcuts.
- */
-
 import './styles/main.css'
-import { animate } from 'animejs'
-import { parseHash, Router } from './engine/router'
+import { counts, sections } from './data/content'
+import { currentRoute, navigate, onRouteChange } from './engine/router'
+import type { RouteId } from './engine/router'
+import { blip, isSoundOn, setSound } from './engine/audio'
 import { startMotes } from './engine/motes'
-import { isSoundEnabled, setSoundEnabled, sfx } from './engine/audio'
-import { Boot } from './ui/boot'
-import { Menu } from './ui/menu'
-import { renderSection } from './ui/panel-content'
-import { prefersReducedMotion, revealHub, revealView, wipeTransition, exitHub, exitView } from './ui/transitions'
-import { sections, projects, achievements, certifications } from './data/content'
+import { startFavicon } from './engine/favicon'
+import { startDream } from './engine/dream'
+import { runBoot } from './ui/boot'
+import { renderGrandMenu } from './ui/menu'
+import { renderBody } from './ui/panel-content'
+import { coalesce, veilTo } from './ui/transitions'
 
-const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector<T>(sel)
-
-const STATS: Record<string, number> = {
-  projects: projects.length,
-  awards: achievements.length,
-  certs: certifications.length,
-}
-
-let router!: Router
-let menu!: Menu
-let booted = false
-let currentSection: string | null = null
-/** Coalesce navigation: never let a second blade start mid-cut. */
-let navigating = false
-
-function initSoundToggle() {
-  const btn = $('#sound-toggle')!
-  const sync = () => {
-    btn.textContent = isSoundEnabled() ? '[ SOUND: ON ]' : '[ SOUND: OFF ]'
-    btn.setAttribute('aria-pressed', String(isSoundEnabled()))
+function animateCounts(root: ParentNode = document): void {
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const targets: Record<string, number> = {
+    systems: counts.systems,
+    roles: counts.roles,
+    certs: counts.certs,
+    awards: counts.awards,
   }
-  btn.addEventListener('click', () => {
-    setSoundEnabled(!isSoundEnabled())
-    sync()
-    sfx.confirm()
-  })
-  sync()
-}
-
-function animateStats() {
-  document.querySelectorAll<HTMLElement>('.stat-num').forEach((n, i) => {
-    const target = STATS[n.dataset.stat ?? ''] ?? 0
-    if (prefersReducedMotion()) {
-      n.textContent = String(target)
+  root.querySelectorAll<HTMLElement>('[data-stat]').forEach((node) => {
+    const key = node.dataset.stat ?? ''
+    const end = targets[key] ?? 0
+    if (reduced) {
+      node.textContent = String(end)
       return
     }
-    const obj = { v: 0 }
-    animate(obj, {
-      v: target,
-      duration: 1100,
-      ease: 'outExpo',
-      delay: 600 + i * 120,
-      onUpdate: () => {
-        n.textContent = String(Math.round(obj.v))
-      },
-    })
+    const t0 = performance.now()
+    const tick = (t: number) => {
+      const p = Math.min((t - t0) / 700, 1)
+      node.textContent = String(Math.round(end * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
   })
 }
 
-function enterHub() {
-  $('#app')!.hidden = false
-  $('#hub')!.hidden = false
-  $('#view')!.hidden = true
-  $('#chrome')!.hidden = false
-  // The command menu re-slams in on EVERY arrival — Persona/Metaphor replay
-  // their menu entrance each time it opens, and replaying keeps the hub
-  // visible after exitHub() faded it out for the blade.
-  revealHub()
-  animateStats()
-  // Keyboard users start on command 01.
-  menu.focusFirst()
-}
-
-/** Blade-cut into a section document. Coalesced; instant under reduced motion. */
-async function openSection(id: string) {
-  const sec = sections.find((s) => s.id === id)
-  if (!sec || navigating || currentSection === id) return
-  navigating = true
-  sfx.open()
-  if (prefersReducedMotion()) {
-    $('#app')!.hidden = false
-    $('#chrome')!.hidden = false
-    $('#hub')!.hidden = true
-    $('#view')!.hidden = false
-    setViewContent(id, sec)
-    $('#view-body')!.focus({ preventScroll: true })
-    navigating = false
-    return
-  }
-  exitHub()
-  await wipeTransition(
-    () => {
-      // Swapping under cover: release the nav lock the instant the new scene
-      // exists, so Escape / links are honoured while the blade is still out.
-      $('#app')!.hidden = false
-      $('#chrome')!.hidden = false
-      $('#hub')!.hidden = true
-      $('#view')!.hidden = false
-      setViewContent(id, sec)
-      revealView()
-      $('#view-body')!.focus({ preventScroll: true })
-      navigating = false
-    },
-    { title: sec.title, kicker: 'SECTION 0' + (sections.indexOf(sec) + 1) },
-  )
-}
-
-/** Blade-cut back to the command menu. */
-async function closeSection() {
-  if (currentSection === null || navigating) return
-  navigating = true
-  sfx.cancel()
-  if (prefersReducedMotion()) {
-    $('#view')!.hidden = true
-    $('#hub')!.hidden = false
-    currentSection = null
-    menu.focusFirst()
-    navigating = false
-    return
-  }
-  exitView()
-  await wipeTransition(
-    () => {
-      $('#view')!.hidden = true
-      $('#hub')!.hidden = false
-      currentSection = null
-      navigating = false
-      // Start the menu slam UNDER the blade so it's already mid-entrance
-      // as the cut uncovers the hub — never an empty beat.
-      revealHub()
-      animateStats()
-      menu.focusFirst()
-    },
-    { title: 'COMMAND', kicker: 'MENU' },
-  )
-}
-
-function handleRoute(id: string) {
-  if (id === 'title') {
-    // The title screen owns the session until advanced; afterwards '' means menu.
-    if (booted) router.go('menu')
-    return
-  }
-  if (!booted) return
-  if (id === 'menu') {
-    if (currentSection !== null) void closeSection()
-    else enterHub()
-  } else {
-    void openSection(id)
-  }
-}
-
-/** Populate the document frame for `id` and reset the reveal choreography. */
-function setViewContent(id: string, sec: (typeof sections)[number]) {
-  $('#view-kicker')!.textContent = sec.title
-  $('#view-intro')!.textContent = sec.intro
-  $('#view-heading')!.textContent = sec.heading
-  $('#view-watermark')!.textContent = sec.heading.split(' ')[0].toUpperCase()
-  const body = $('#view-body')!
+function paint(route: Exclude<RouteId, 'menu'>): void {
+  const meta = sections.find((s) => s.id === route) ?? sections[0]
+  document.getElementById('page-screen')?.classList.toggle('route-skills', route === 'skills')
+  const kicker = document.getElementById('view-kicker')
+  const heading = document.getElementById('view-heading')
+  const intro = document.getElementById('view-intro')
+  const body = document.getElementById('view-body')
+  if (!kicker || !heading || !intro || !body) return
+  kicker.textContent = meta.kicker
+  heading.textContent = meta.heading
+  intro.textContent = meta.intro
   body.innerHTML = ''
-  renderSection(id, body)
-  currentSection = id
+  body.appendChild(renderBody(route))
+  animateCounts(body)
 }
 
-function init() {
-  startMotes($('#motes')!)
-  initSoundToggle()
+const dreamHover: { index: number | null } = { index: null }
+let dreamStop: () => void = () => undefined
+let menuBuilt = false
 
-  // Gate the boot slam on Cinzel being ready so letters never flash a fallback face.
-  const start = () => void startSession()
-  if (document.fonts?.ready) void document.fonts.ready.then(start)
-  else start()
+function setDrawer(open: boolean, focusRow: boolean): void {
+  const screen = document.getElementById('menu-screen')
+  const drawer = document.getElementById('menu-drawer')
+  const tab = document.getElementById('menu-tab') as HTMLButtonElement | null
+  if (!screen || !drawer || !tab) return
+  screen.classList.toggle('drawer-open', open)
+  tab.setAttribute('aria-expanded', String(open))
+  if (open) {
+    drawer.removeAttribute('inert')
+    if (focusRow) document.querySelector<HTMLButtonElement>('.grand-row')?.focus({ preventScroll: true })
+  } else {
+    drawer.setAttribute('inert', '')
+  }
 }
 
-function startSession() {
-  if (booted) return
-  menu = new Menu((id) => router.go(id))
-  menu.render()
+function wireDrawer(): void {
+  const screen = document.getElementById('menu-screen')
+  const dock = document.getElementById('menu-dock')
+  const tab = document.getElementById('menu-tab') as HTMLButtonElement | null
+  if (!screen || !dock || !tab) return
+  tab.addEventListener('click', () => {
+    const willOpen = !screen.classList.contains('drawer-open')
+    setDrawer(willOpen, willOpen)
+  })
+  tab.addEventListener('mouseenter', () => setDrawer(true, false))
+  dock.addEventListener('mouseleave', () => setDrawer(false, false))
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && screen.classList.contains('drawer-open')) {
+      setDrawer(false, false)
+      tab.focus({ preventScroll: true })
+    }
+  })
+  // Game controls, app-wide: digits quick-travel to pages (rows handle
+  // their own keys, so skip events from inside the drawer), arrows hop
+  // the lit planet across the solar system with Enter/Space to land,
+  // I toggles the index drawer while the menu is up.
+  document.addEventListener('keydown', (e) => {
+    const app = document.getElementById('app')
+    if (!app || app.hidden) return
+    const target = e.target as HTMLElement | null
+    if (/^[1-6]$/.test(e.key)) {
+      if (target?.closest?.('.grand-menu')) return
+      e.preventDefault()
+      const rows = [...document.querySelectorAll<HTMLButtonElement>('.grand-row')]
+      rows[Number(e.key) - 1]?.click()
+      return
+    }
+    const hop: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }
+    const step = hop[e.key]
+    if (step !== undefined && !screen.hidden) {
+      if (target?.closest?.('.grand-menu')) return
+      e.preventDefault()
+      const n = sections.length
+      dreamHover.index = ((dreamHover.index ?? -1) + step + n) % n
+      return
+    }
+    if ((e.key === 'Enter' || e.key === ' ') && !screen.hidden) {
+      if (target?.closest?.('button, a, input, textarea')) return
+      const lit = dreamHover.index !== null ? sections[dreamHover.index] : undefined
+      if (lit) {
+        e.preventDefault()
+        navigate(lit.id as RouteId)
+      }
+      return
+    }
+    if ((e.key === 'i' || e.key === 'I') && !screen.hidden) {
+      if (target?.closest?.('input, textarea')) return
+      const willOpen = !screen.classList.contains('drawer-open')
+      setDrawer(willOpen, willOpen)
+    }
+  })
+}
+
+function showMenu(focusFirst: boolean): void {
+  const menu = document.getElementById('menu-screen')
+  const page = document.getElementById('page-screen')
+  if (page) page.hidden = true
+  setDrawer(false, false)
+  if (menu) {
+    menu.hidden = false
+    dreamStop()
+    const canvas = document.getElementById('dream') as HTMLCanvasElement | null
+    if (canvas) {
+      dreamStop = startDream(
+        canvas,
+        dreamHover,
+        sections.map((s) => s.label),
+        (i) => {
+          const target = sections[i]
+          if (target) navigate(target.id as RouteId)
+        },
+      )
+    }
+    animateCounts(menu)
+  }
+  if (focusFirst) {
+    setDrawer(false, false)
+    document.getElementById('menu-tab')?.focus({ preventScroll: true })
+  }
+  document.getElementById('view-body')?.blur?.()
+}
+
+function showPage(route: Exclude<RouteId, 'menu'>): void {
+  const menu = document.getElementById('menu-screen')
+  const page = document.getElementById('page-screen')
+  dreamStop()
+  if (menu) menu.hidden = true
+  if (page) page.hidden = false
+  paint(route)
+  animateCounts(document)
+  document.getElementById('view-body')?.focus({ preventScroll: true })
+}
+
+function routeTo(route: RouteId, focusMenu: boolean): void {
+  const meta = sections.find((s) => s.id === route)
+  if (route === 'menu' || !meta) {
+    const label = { kicker: 'TY.OS', title: 'Index' }
+    coalesce(() => veilTo(label, () => showMenu(focusMenu)))
+    return
+  }
+  coalesce(() => veilTo({ kicker: meta.kicker, title: meta.heading }, () => showPage(route)))
+}
+
+function showApp(initial: RouteId): void {
+  const save = document.getElementById('save')
+  const app = document.getElementById('app')
+  if (save) save.hidden = true
+  if (app) app.hidden = false
+  if (!menuBuilt) {
+    menuBuilt = true
+    renderGrandMenu({
+      hover: dreamHover,
+      onSelect: (r) => navigate(r),
+    })
+    wireDrawer()
+    document.getElementById('page-back')?.addEventListener('click', () => {
+      blip(520, 60)
+      navigate('menu')
+    })
+  }
+  setDrawer(false, false)
+  if (initial === 'menu') showMenu(false)
+  else showPage(initial)
+  animateCounts(document)
+}
+
+function main(): void {
+  startFavicon()
+  startMotes(document.getElementById('motes') as HTMLCanvasElement)
+
+  const toggle = document.getElementById('sound-toggle') as HTMLButtonElement | null
+  toggle?.addEventListener('click', () => {
+    const next = !isSoundOn()
+    setSound(next)
+    toggle.setAttribute('aria-pressed', String(next))
+    toggle.textContent = next ? '[ SOUND: ON ]' : '[ SOUND: OFF ]'
+    blip(700, 50)
+  })
+
+  onRouteChange((route) => {
+    const app = document.getElementById('app')
+    if (!app || app.hidden) return
+    routeTo(route, true)
+  })
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && currentSection !== null && !navigating) void closeSection()
+    const page = document.getElementById('page-screen')
+    if (e.key === 'Escape' && page && !page.hidden) {
+      navigate('menu')
+    }
   })
 
-  router = new Router(handleRoute)
-  const initial = parseHash()
-  const deepLinked = initial !== 'menu' && initial !== 'title'
-
-  if (Boot.wasBooted() || deepLinked) {
-    // Returning visitor, or a recruiter landing straight on a section:
-    // skip the ceremony entirely.
-    booted = true
-    new Boot(() => {}).skipInstant()
-    router.start()
-    if (parseHash() === 'title') router.go('menu')
-  } else {
-    router.start()
-    const boot = new Boot(() => {
-      booted = true
-      // Re-dispatch the current route: `go('menu')` alone would be deduped
-      // when the visitor already sits on #/menu (deep link straight to hub).
-      handleRoute(parseHash())
-    })
-    void boot.run()
-  }
+  runBoot(() => {
+    const boot = document.getElementById('boot')
+    const save = document.getElementById('save')
+    if (boot) boot.hidden = true
+    if (save) {
+      save.hidden = false
+      animateCounts(save)
+      const slot = document.getElementById('slot-1') as HTMLButtonElement | null
+      slot?.focus({ preventScroll: true })
+      let entered = false
+      const enter = () => {
+        if (entered) return
+        entered = true
+        blip(520, 70)
+        showApp(currentRoute())
+      }
+      slot?.addEventListener('click', enter)
+      if (window.location.hash && window.location.hash !== '#/') {
+        enter()
+      }
+    }
+  })
 }
 
-init()
+main()

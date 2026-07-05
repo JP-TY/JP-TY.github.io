@@ -1,145 +1,150 @@
-/**
- * James Ty Portfolio — title screen. Confident layered name-mark slam
- * (outExpo, no elastic wobble) with a single gold shockwave ring as the hero
- * flourish. Skippable; shown once per session.
- */
+import { animate, stagger } from 'animejs'
+import { blip } from '../engine/audio'
+import { startEffigy } from '../engine/effigy'
 
-import { animate, createTimeline, stagger, utils } from 'animejs'
-import { sfx } from '../engine/audio'
-import { prefersReducedMotion } from './transitions'
+const reduced = () =>
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-const BOOT_KEY = 'tyr-booted'
+// ponytail: storage throws (SecurityError) with blocked cookies; never let it kill boot.
+function storageGet(key: string): string | null {
+  try {
+    return sessionStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
 
-export class Boot {
-  private done = false
-  private pendingResolve: (() => void) | null = null
+function storageSet(key: string, value: string): void {
+  try {
+    sessionStorage.setItem(key, value)
+  } catch {
+    /* private mode: boot simply replays next visit */
+  }
+}
 
-  constructor(private onComplete: () => void) {}
-
-  async run() {
-    const boot = document.getElementById('boot')
-    if (!boot) return
-    const title = document.getElementById('boot-title')
-    const reduced = prefersReducedMotion()
-
-    if (title && !reduced) {
-      // Split into per-letter spans for the slam.
-      const text = title.textContent ?? 'James Ty Portfolio'
-      title.textContent = ''
-      for (const ch of text) {
-        const span = document.createElement('span')
-        span.className = 'boot-letter'
-        span.textContent = ch === ' ' ? '\u00A0' : ch
-        title.appendChild(span)
-      }
-      const letters = title.querySelectorAll<HTMLElement>('.boot-letter')
-      utils.set(letters, { opacity: 0, y: 70, scale: 1.35 })
-      const tl = createTimeline()
-      tl.add(
-        '.boot-crest',
-        { opacity: [0, 1], scale: [0.4, 1], rotate: [-30, 0], duration: 520, ease: 'outExpo' },
-        0,
-      )
-      tl.add(letters, {
-        opacity: [0, 1],
-        y: [70, 0],
-        scale: [1.35, 1],
-        duration: 640,
-        ease: 'outExpo',
-        delay: stagger(45, { start: 140 }),
-      })
-      // single hero flourish: one expanding gold shockwave ring as the name lands
-      const ring = document.createElement('div')
-      ring.className = 'boot-ring'
-      boot.appendChild(ring)
-      animate(ring, {
-        scale: [0.3, 2.6],
-        opacity: [0.85, 0],
-        duration: 1000,
-        delay: 980,
-        ease: 'outExpo',
-        onComplete: () => ring.remove(),
-      })
-      tl.add(
-        '.boot-rule',
-        { scaleX: [0, 1], opacity: [0, 1], duration: 700, ease: 'outExpo' },
-        '-=500',
-      )
-      tl.add(
-        '.boot-sub',
-        { opacity: [0, 1], y: [14, 0], duration: 500, ease: 'outExpo' },
-        '-=450',
-      )
-      tl.add(
-        '.boot-byline',
-        { opacity: [0, 1], y: [12, 0], duration: 500, ease: 'outExpo' },
-        '-=380',
-      )
-      tl.add(
-        '.boot-advance',
-        { opacity: [0, 1], duration: 400, ease: 'outQuad' },
-        '-=300',
-      )
-    } else {
-      boot.classList.add('boot-static')
+// ponytail: a failed flourish must never block progress.
+function play(a: unknown): void {
+  try {
+    const done = (a as { completed?: unknown }).completed
+    if (done && typeof (done as PromiseLike<unknown>).then === 'function') {
+      void Promise.resolve(done).catch(() => undefined)
     }
+  } catch {
+    /* static frame stands */
+  }
+}
 
-    this.armSkip()
+const LINES = [
+  'TY.OS v1.0',
+  'checking profile memory ... OK',
+  'loading skill grid ....... OK',
+  'linking recognition ..... OK',
+]
+
+export function runBoot(onDone: () => void): void {
+  const boot = document.getElementById('boot')
+  const log = document.getElementById('boot-log')
+  const title = document.getElementById('boot-title')
+  const advance = document.getElementById('boot-advance') as HTMLButtonElement | null
+  if (!boot || !log || !title || !advance) {
+    onDone()
+    return
+  }
+  const bootEl = boot
+  const seen = storageGet('tyos-boot') === '1'
+  let done = false
+  let revealed = false
+  let timer = 0
+  // Amber Ancestor burns only while boot is on screen.
+  const effigyEl = document.getElementById('effigy')
+  const stopEffigy =
+    effigyEl instanceof HTMLCanvasElement ? startEffigy(effigyEl) : () => undefined
+
+  const finish = () => {
+    if (done) return
+    done = true
+    window.clearTimeout(timer)
+    stopEffigy()
+    storageSet('tyos-boot', '1')
+    blip(520, 70)
+    bootEl.hidden = true
+    window.removeEventListener('keydown', key)
+    onDone()
   }
 
-  /** Wire up skip: any key, click, or the advance button. */
-  private armSkip() {
-    const boot = document.getElementById('boot')
-    if (!boot) return
-    const advance = () => {
-      if (this.done) return
-      this.done = true
-      sfx.confirm()
-      try {
-        sessionStorage.setItem(BOOT_KEY, '1')
-      } catch {
-        /* private mode: boot simply always shows */
-      }
-      const finish = () => {
-        boot.hidden = true
-        this.pendingResolve?.()
-        this.onComplete()
-      }
-      if (prefersReducedMotion()) {
-        finish()
+  const reveal = () => {
+    if (revealed) return
+    revealed = true
+    window.clearTimeout(timer)
+    log.textContent = LINES.join('\n')
+    advance.hidden = false
+    advance.focus({ preventScroll: true })
+    if (reduced() || seen) {
+      title.style.opacity = '1'
+      return
+    }
+    try {
+      const text = title.textContent ?? ''
+      title.setAttribute('aria-label', text)
+      title.innerHTML = text
+        .split('')
+        .map((c) => `<span class="bl" aria-hidden="true">${c === ' ' ? '&nbsp;' : c}</span>`)
+        .join('')
+      play(
+        animate('.boot-title .bl', {
+          opacity: [0, 1],
+          translateY: [22, 0],
+          duration: 380,
+          delay: stagger(45),
+          easing: 'cubicBezier(0.22, 1, 0.36, 1)',
+        }),
+      )
+    } catch {
+      title.style.opacity = '1'
+    }
+  }
+
+  // First press/click fast-forwards to the button; second press enters.
+  // This keeps early input from ever feeling swallowed.
+  function key(e: KeyboardEvent): void {
+    if (bootEl.hidden || done) return
+    if (e.key === 'Escape' || revealed) finish()
+    else reveal()
+  }
+
+  advance.addEventListener('click', finish)
+  bootEl.addEventListener('click', (e) => {
+    if (e.target !== advance) {
+      if (revealed) finish()
+      else reveal()
+    }
+  })
+  window.addEventListener('keydown', key)
+
+  if (reduced() || seen) {
+    reveal()
+    return
+  }
+
+  // Safety net: typing chain must never strand the visitor.
+  timer = window.setTimeout(reveal, 3000)
+
+  log.textContent = ''
+  let i = 0
+  const step = (): void => {
+    if (done) return
+    try {
+      if (i < LINES.length) {
+        log.textContent += `${LINES[i]}\n`
+        blip(740 + i * 40, 40)
+        i += 1
+        window.setTimeout(step, 170)
       } else {
-        animate('.boot-inner', {
-          opacity: [1, 0],
-          scale: [1, 1.06],
-          duration: 320,
-          ease: 'inQuad',
-          onComplete: finish,
-        })
+        reveal()
       }
-    }
-
-    document.getElementById('boot-advance')?.addEventListener('click', advance)
-    document.addEventListener('keydown', advance, { once: true })
-    document.addEventListener('pointerdown', advance, { once: true })
-  }
-
-  /** Immediately show the hub (deep links / returning visitors). */
-  skipInstant() {
-    this.done = true
-    const boot = document.getElementById('boot')
-    if (boot) boot.hidden = true
-    try {
-      sessionStorage.setItem(BOOT_KEY, '1')
     } catch {
-      /* ignore */
+      reveal()
     }
   }
-
-  static wasBooted(): boolean {
-    try {
-      return sessionStorage.getItem(BOOT_KEY) === '1'
-    } catch {
-      return false
-    }
-  }
+  step()
 }

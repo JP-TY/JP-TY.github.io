@@ -1,77 +1,70 @@
-/**
- * James Ty Portfolio — the primary command menu. ⚜ cursor glyph, staggered slam-in,
- * springy hover, roving-focus keyboard navigation.
- */
-
-import { animate, createSpring } from 'animejs'
 import { sections } from '../data/content'
-import { sfx } from '../engine/audio'
+import type { RouteId } from '../engine/router'
+import { blip } from '../engine/audio'
 
-export class Menu {
-  private buttons: HTMLButtonElement[] = []
-  private activeIndex = -1
+export interface GrandMenuOpts {
+  hover: { index: number | null }
+  onSelect: (r: RouteId) => void
+}
 
-  constructor(private onCommand: (id: string) => void) {}
-
-  render() {
-    const list = document.getElementById('menu-list')
-    if (!list) return
-    sections.forEach((s, i) => {
-      const li = document.createElement('li')
-      const b = document.createElement('button')
-      b.type = 'button'
-      b.className = 'menu-item'
-      b.dataset.section = s.id
-      b.innerHTML =
-        `<span class="menu-cursor" aria-hidden="true">⚜</span>` +
-        `<span class="menu-num" aria-hidden="true">0${i + 1}</span>` +
-        `<span class="menu-label">${s.label}</span>` +
-        `<span class="menu-rule" aria-hidden="true"></span>`
-      b.addEventListener('click', () => this.onCommand(s.id))
-      b.addEventListener('pointerenter', () => this.setActive(i))
-      b.addEventListener('focus', () => this.setActive(i))
-      li.appendChild(b)
-      list.appendChild(li)
+/** Full-screen Persona-style grand menu with roving focus. */
+export function renderGrandMenu(opts: GrandMenuOpts): void {
+  const list = document.getElementById('menu-list')
+  if (!list) return
+  list.setAttribute('role', 'menu')
+  list.innerHTML = ''
+  sections.forEach((s, idx) => {
+    const li = document.createElement('li')
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.className = 'grand-row'
+    btn.dataset.route = s.id
+    btn.setAttribute('role', 'menuitem')
+    btn.tabIndex = idx === 0 ? 0 : -1
+    btn.innerHTML = `<span class="grand-index" aria-hidden="true">0${idx + 1}</span><span class="grand-label">${s.label}</span>`
+    const go = () => {
+      blip(660, 50)
+      opts.onSelect(s.id as RouteId)
+    }
+    btn.addEventListener('click', go)
+    btn.addEventListener('mouseenter', () => {
+      opts.hover.index = idx
     })
-    this.buttons = Array.from(list.querySelectorAll<HTMLButtonElement>('.menu-item'))
-
-    // Springy press feedback on every command.
-    this.buttons.forEach((b) => {
-      b.addEventListener('pointerdown', () => {
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-        animate(b, { scale: 0.965, duration: 90, ease: 'outQuad' })
-      })
-      b.addEventListener('pointerup', () => {
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-        animate(b, { scale: 1, ease: createSpring({ stiffness: 380, damping: 24 }) })
-      })
+    btn.addEventListener('mouseleave', () => {
+      if (opts.hover.index === idx) opts.hover.index = null
     })
-
-    // Roving keyboard: arrows move selection, Home/End jump, Enter clicks.
-    list.addEventListener('keydown', (e: KeyboardEvent) => {
-      const total = this.buttons.length
-      let next: number | null = null
-      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') next = (this.activeIndex + 1 + total) % total
-      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') next = (this.activeIndex - 1 + total) % total
-      else if (e.key === 'Home') next = 0
-      else if (e.key === 'End') next = total - 1
-      if (next !== null) {
+    btn.addEventListener('focus', () => {
+      opts.hover.index = idx
+    })
+    btn.addEventListener('blur', () => {
+      if (opts.hover.index === idx) opts.hover.index = null
+    })
+    btn.addEventListener('keydown', (e) => {
+      const rows = [...list.querySelectorAll<HTMLButtonElement>('.grand-row')]
+      const at = rows.indexOf(btn)
+      const move = (dir: 1 | -1) => {
         e.preventDefault()
-        this.setActive(next)
-        this.buttons[next].focus()
+        const target = rows[(at + dir + rows.length) % rows.length]
+        rows.forEach((r) => (r.tabIndex = -1))
+        target.tabIndex = 0
+        target.focus()
+      }
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key
+      if (k === 'ArrowDown' || k === 'ArrowRight' || k === 's' || k === 'd' || k === 'j' || k === 'l') {
+        move(1)
+      } else if (k === 'ArrowUp' || k === 'ArrowLeft' || k === 'w' || k === 'a' || k === 'k' || k === 'h') {
+        move(-1)
+      } else if (k === 'Enter' || k === ' ') {
+        e.preventDefault()
+        go()
+      } else if (/^[1-6]$/.test(e.key)) {
+        e.preventDefault()
+        const target = rows[Number(e.key) - 1]
+        target?.focus()
+        target?.click()
       }
     })
-  }
-
-  setActive(i: number) {
-    if (i === this.activeIndex) return
-    this.activeIndex = i
-    this.buttons.forEach((b, j) => b.classList.toggle('is-active', j === i))
-    sfx.move()
-  }
-
-  /** Focus the first command without scrolling (keyboard entry point). */
-  focusFirst() {
-    this.buttons[0]?.focus({ preventScroll: true })
-  }
+    li.appendChild(btn)
+    list.appendChild(li)
+  })
 }

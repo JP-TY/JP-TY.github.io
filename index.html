@@ -3,28 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>James Gabriel Elijah Ty — Portfolio</title>
+    <title>James Gabriel Elijah Ty — Cloud Engineer</title>
     <meta
       name="description"
-      content="Portfolio of James Gabriel Elijah Ty — computer science undergraduate (UP Cebu 2027) building software across XR, cloud, and geospatial systems. Projects, experience, achievements, and contact."
+      content="Portfolio of James Gabriel Elijah Ty — CS undergraduate at UP Cebu building cloud, AI, and system design. Projects, skills, experience, awards, contact."
     />
-    <meta name="theme-color" content="#250505" />
+    <meta name="theme-color" content="#0a0c10" />
     <link rel="canonical" href="https://jpty.me/" />
-    <meta property="og:title" content="James Gabriel Elijah Ty — Portfolio" />
+    <meta property="og:title" content="James Gabriel Elijah Ty — Cloud Engineer" />
     <meta
       property="og:description"
-      content="Projects, experience, and achievements of a CS undergraduate working in XR, cloud, and geospatial systems. Interface inspired by the menu design of Atlus JRPGs."
+      content="Cloud, AI, and system design plus community impact. Select work, skill grid, timeline, recognition."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://jpty.me/" />
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23250505'/%3E%3Ctext x='16' y='23' font-size='18' fill='%23c9a13e' text-anchor='middle'%3E%E2%9A%9C%3C/text%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0c10'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23f5b544' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23f5b544'/%3E%3C/svg%3E"
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Cinzel:wght@700;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap"
       rel="stylesheet"
     />
     <script type="module" src="/src/main.ts"></script>
@@ -32,123 +32,115 @@
   <body>
     <a class="skip-link" href="#view-body">Skip to content</a>
 
-    <!-- Ambient layers -->
     <canvas id="motes" aria-hidden="true"></canvas>
+    <div id="gridlines" aria-hidden="true"></div>
+    <div id="aurora" aria-hidden="true"><span></span><span></span></div>
     <div id="vignette" aria-hidden="true"></div>
+    <div id="scanlines" aria-hidden="true"></div>
 
-    <!-- Blade diagonal wipe overlay (signature transition) -->
-    <div id="wipe" aria-hidden="true">
-      <div class="wipe-panel wipe-base"></div>
-      <div class="wipe-panel wipe-b"></div>
-      <div class="wipe-panel wipe-a"
-        ><span class="wipe-edge"></span>
-        <div class="wipe-name">
-          <span class="wipe-kicker"></span>
-          <span class="wipe-title"></span>
-        </div></div
-      >
-      <div class="wipe-panel wipe-c"></div>
-      <div class="cut-seam"></div>
-      <div class="cut-flash"></div>
+    <!-- Grid-zoom transition veil -->
+    <div id="veil" aria-hidden="true">
+      <div class="veil-grid"></div>
+      <div class="veil-flash"></div>
+      <p class="veil-name"><span class="veil-kicker"></span><span class="veil-title"></span></p>
     </div>
 
-    <!-- Boot / title screen -->
-    <section id="boot" class="screen" aria-label="Title screen">
-      <div class="boot-inner">
-        <p class="boot-crest" aria-hidden="true">⚜</p>
-        <h1 class="boot-title" id="boot-title">JAMES TY</h1>
-        <p class="boot-rule" aria-hidden="true"></p>
-        <p class="boot-sub">PORTFOLIO</p>
-        <p class="boot-byline">JAMES GABRIEL ELIJAH TY · BS COMPUTER SCIENCE · UNIVERSITY OF THE PHILIPPINES CEBU</p>
-        <button id="boot-advance" class="boot-advance" type="button">— PRESS ANY KEY —</button>
+    <!-- Boot -->
+    <!-- Boot -->
+        <section id="boot" class="screen" aria-label="System boot">
+          <div class="boot-inner">
+            <canvas id="effigy" class="effigy-bg" aria-hidden="true"></canvas>
+            <div class="boot-shade" aria-hidden="true"></div>
+            <div class="boot-fg">
+              <pre id="boot-log" class="boot-log" aria-hidden="true"></pre>
+              <h1 class="boot-title" id="boot-title">JAMES TY</h1>
+              <p class="boot-sub">CLOUD ENGINEER — UP CEBU 2027</p>
+              <button id="boot-advance" class="boot-advance" type="button" hidden>
+                PRESS ANY KEY TO CONTINUE
+              </button>
+            </div>
+          </div>
+        </section>
+
+    <!-- Save select -->
+    <section id="save" class="screen" aria-label="Profile select" hidden>
+      <div class="save-inner">
+        <p class="sys-kicker">TY.OS v1.0</p>
+        <h2 class="save-heading">Select profile</h2>
+        <div class="slot-list" role="list">
+          <button id="slot-1" class="slot" type="button" role="listitem">
+            <span class="slot-index">SLOT 1</span>
+            <span class="slot-name">JAMES GABRIEL ELIJAH TY</span>
+            <span class="slot-meta">BS COMPUTER SCIENCE · UP CEBU · JUL 2027 · CEBU CITY, PH</span>
+            <span class="slot-stats">
+              <span><strong data-stat="systems">0</strong> SYSTEMS</span>
+              <span><strong data-stat="roles">0</strong> ROLES</span>
+              <span><strong data-stat="certs">0</strong> CERTS</span>
+            </span>
+            <span class="slot-cta">CONTINUE →</span>
+          </button>
+        </div>
+        <p class="save-hint">ENTER selects · ESC skips boot · <a href="#/profile">skip to profile</a></p>
       </div>
     </section>
 
-    <!-- Application -->
+    <!-- Menu + full-screen pages -->
     <div id="app" hidden>
-      <!-- Hub: main command menu -->
-      <section id="hub" class="screen" aria-label="Main menu">
-        <header class="hub-brand">
-          <p class="hub-location">CEBU CITY, PHILIPPINES</p>
-          <p class="hub-title">JAMES TY</p>
-        </header>
+      <header id="sysbar" class="sysbar">
+        <span class="sysbar-brand">TY.OS</span>
+        <span class="sysbar-ver">v1.0</span>
+        <span class="sysbar-spacer"></span>
+        <button id="sound-toggle" class="sysbar-btn" type="button" aria-pressed="false">
+          [ SOUND: OFF ]
+        </button>
+      </header>
 
-        <nav id="menu" class="command-menu" aria-label="Primary">
-          <ul id="menu-list" class="menu-list"></ul>
-        </nav>
-
-        <aside id="charcard" class="char-card" aria-label="Profile summary">
-          <div class="char-portrait" aria-hidden="true">
-            <span class="char-monogram">JT</span>
-            <span class="corner c-tl"></span><span class="corner c-tr"></span>
-            <span class="corner c-bl"></span><span class="corner c-br"></span>
-          </div>
-          <dl class="char-fields">
-            <div class="char-field"><dt>NAME</dt><dd>James Gabriel Elijah Ty</dd></div>
-            <div class="char-field"><dt>ROLE</dt><dd>CS Undergraduate · Software Developer</dd></div>
-            <div class="char-field"><dt>AFFILIATIONS</dt><dd>ISCOLab · GitHub Campus Experts · AWS Builders</dd></div>
-            <div class="char-field"><dt>FOCUS</dt><dd>XR · Cloud · Geospatial Systems</dd></div>
-          </dl>
-          <div class="char-stats" id="char-stats" aria-label="Record">
-            <div class="char-stat"><span class="stat-num" data-stat="projects">0</span><span class="stat-label">PROJECTS</span></div>
-            <div class="char-stat"><span class="stat-num" data-stat="awards">0</span><span class="stat-label">AWARDS</span></div>
-            <div class="char-stat"><span class="stat-num" data-stat="certs">0</span><span class="stat-label">CERTS</span></div>
-          </div>
-        </aside>
-
-        <footer id="status-strip" class="status-strip">
-          <span class="strip-item">LOCATION: CEBU CITY, PH</span>
-          <span class="strip-item">EDUCATION: UP CEBU · 2027</span>
-          <span class="strip-links">
-            <a href="mailto:jamesty016@gmail.com">✉ EMAIL</a>
-            <a href="https://github.com/JP-TY" target="_blank" rel="noopener noreferrer">GITHUB</a>
-            <a href="https://www.linkedin.com/in/james-gabriel-elijah-ty-6a7b0a334/" target="_blank" rel="noopener noreferrer">LINKEDIN</a>
-          </span>
-        </footer>
-      </section>
-
-      <!-- Section view -->
-      <section id="view" class="screen view" hidden aria-label="Section document">
-        <div class="view-frame">
-          <button id="view-close" class="view-close" type="button" aria-label="Return to main menu">
-            <span aria-hidden="true">✕</span> ESC · RETURN
+      <section id="menu-screen" class="menu-screen" aria-label="Main menu">
+        <canvas id="dream" aria-hidden="true"></canvas>
+        <div class="menu-shade" aria-hidden="true"></div>
+        <div id="menu-dock" class="menu-dock">
+          <button id="menu-tab" class="menu-tab" type="button" aria-expanded="false" aria-controls="menu-drawer" aria-label="Open index">
+            <span aria-hidden="true">INDEX</span>
           </button>
-          <p class="view-kicker" id="view-kicker"></p>
-          <h2 class="view-heading" id="view-heading"></h2>
-          <p class="view-intro" id="view-intro"></p>
-          <div id="view-body" class="view-body" tabindex="-1"></div>
-          <div class="view-wm-clip" aria-hidden="true">
-            <p class="view-watermark" id="view-watermark"></p>
+          <div id="menu-drawer" class="menu-drawer" inert>
+            <div class="menu-fg">
+              <p class="menu-kicker">TY.OS — INDEX · ARROWS + ENTER · 1–6 · WASD</p>
+              <nav aria-label="Primary">
+                <ul id="menu-list" class="grand-menu"></ul>
+              </nav>
+              <p class="menu-record">
+                <span><strong data-stat="systems">0</strong> SYSTEMS</span>
+                <span><strong data-stat="roles">0</strong> ROLES</span>
+                <span><strong data-stat="awards">0</strong> AWARDS</span>
+              </p>
+            </div>
           </div>
         </div>
       </section>
+
+      <main id="page-screen" class="page-screen" aria-label="Section" hidden>
+        <div class="page-frame">
+          <div class="page-head">
+            <div class="page-top">
+              <button id="page-back" class="page-back" type="button">◂ RETURN</button>
+              <span class="page-kicker" id="view-kicker"></span>
+            </div>
+            <h2 class="view-heading" id="view-heading"></h2>
+            <p class="view-intro" id="view-intro"></p>
+          </div>
+          <div id="view-body" class="view-body" tabindex="-1"></div>
+        </div>
+      </main>
+
+      <footer id="status-strip" class="status-strip">
+        <span class="strip-item">UP CEBU · BS CS 2027</span>
+        <span class="strip-item strip-hide-sm">CEBU CITY, PH</span>
+        <span class="strip-links">
+          <a href="mailto:jamesty016@gmail.com">EMAIL</a>
+          <a href="https://github.com/JP-TY" target="_blank" rel="noopener noreferrer">GITHUB</a>
+          <a href="https://www.linkedin.com/in/james-gabriel-elijah-ty-6a7b0a334/" target="_blank" rel="noopener noreferrer">LINKEDIN</a>
+        </span>
+      </footer>
     </div>
-
-    <!-- Persistent chrome -->
-    <div id="chrome" class="chrome" hidden>
-      <button id="sound-toggle" class="chrome-toggle" type="button" aria-pressed="false">[ SOUND: OFF ]</button>
-    </div>
-
-    <noscript>
-      <style>
-        #boot,
-        #app,
-        #chrome {
-          display: none !important;
-        }
-      </style>
-      <div class="noscript">
-        <h1>James Gabriel Elijah Ty</h1>
-        <p>BS Computer Science, University of the Philippines Cebu (Class of 2027) — XR &amp; cloud developer in Cebu City, Philippines.</p>
-        <p>ISCOLab research/developer intern · GitHub Campus Expert · AWS Student Builder Lead.</p>
-        <p>
-          <a href="mailto:jamesty016@gmail.com">jamesty016@gmail.com</a> ·
-          <a href="https://github.com/JP-TY">github.com/JP-TY</a> ·
-          <a href="https://www.linkedin.com/in/james-gabriel-elijah-ty-6a7b0a334/">LinkedIn</a>
-        </p>
-        <p><em>This portfolio needs JavaScript for the full interface. Contact links above work anywhere.</em></p>
-      </div>
-    </noscript>
-
   </body>
 </html>

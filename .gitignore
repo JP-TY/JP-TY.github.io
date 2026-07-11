@@ -4,3 +4,5 @@ dist
 .DS_Store
 scripts/shots
 scripts/*.png
+.impeccable/
+.vite/

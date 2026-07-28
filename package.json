@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "animejs": "^4.0.2",
-    "lucide": "^1.42.0"
+    "lucide": "^1.42.0",
+    "simple-icons": "^16.30.0"
   },
   "devDependencies": {
     "typescript": "~5.7.2",

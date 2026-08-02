@@ -3,7 +3,23 @@
  * Serious copy only. Game feel lives in layout and motion, never in words.
  */
 
-export interface SystemEntry {
+import badgeSAA from '../assets/badge-saa.webp'
+import badgePractitioner from '../assets/badge-practitioner.webp'
+import badgeAI from '../assets/badge-ai.webp'
+import badgeHCCDA from '../assets/HCCDA.webp'
+import badgeCoursera from '../assets/Coursera.webp'
+import awardPJDSC from '../assets/award-pjdsc.webp'
+import awardHDC from '../assets/award-hdc.webp'
+import awardEXPOdition30 from '../assets/award-expodition30.webp'
+import awardLisk from '../assets/award-lisk.webp'
+import awardPSQ from '../assets/award-psq.webp'
+import awardPSQ2 from '../assets/award-psq2.webp'
+import awardPSQ3 from '../assets/award-psq3.webp'
+import awardCesafi from '../assets/award-cesafi.webp'
+import awardInterHigh from '../assets/award-interhigh.webp'
+import awardAPRU from '../assets/award-apru.webp'
+
+export interface ProjectEntry {
   id: string
   name: string
   tagline: string
@@ -206,13 +222,39 @@ export const certifications: string[] = [
   'Huawei Cloud HCCDA Tech Essentials',
 ]
 
+/** Trophy photography per award, bundled locally. The PSQ award carries
+ *  three photos displayed as a fanned bundle. Awards without a photo
+ *  keep the diamond icon tile. */
+export const awardPhotos: Record<string, string[]> = {
+  'Philippines Junior Data Science Challenge 2024': [awardPJDSC],
+  'Huawei Developer Competition 2025': [awardHDC],
+  'UP Cebu EXPOdition 30': [awardEXPOdition30],
+  'Lisk Builders Challenge Round 3': [awardLisk],
+  '27th Philippine Statistics Quiz 2023': [awardPSQ, awardPSQ2, awardPSQ3],
+  'CESAFI Computer Quiz Bowl': [awardCesafi],
+  'UPCSG Inter-High Programming Competition': [awardInterHigh],
+  'APRU Tech Policy Hackathon 2025': [awardAPRU],
+}
+
+/** Official badge art, bundled locally. Certifications without
+ *  a stable public image keep the numbered-disc socket. */
+export const certBadges: Record<string, string> = {
+  'AWS Solutions Architect Associate': badgeSAA,
+  'AWS Cloud Practitioner': badgePractitioner,
+  'AWS AI Practitioner': badgeAI,
+  'Huawei Cloud HCCDA AI': badgeHCCDA,
+  'Huawei Cloud HCCDA Tech Essentials': badgeHCCDA,
+  'AWS Cloud Support Associate, Coursera': badgeCoursera,
+  'AWS Cloud Technology Consultant, Coursera': badgeCoursera,
+}
+
 export const sections = [
   { id: 'profile', label: 'PROFILE', kicker: '01 / 06', heading: 'Profile', intro: 'Background, education, and focus.' },
-  { id: 'systems', label: 'SYSTEMS', kicker: '02 / 06', heading: 'Systems', intro: 'Selected work, each with stack, evidence, and recognition.' },
+  { id: 'projects', label: 'PROJECTS', kicker: '02 / 06', heading: 'Projects', intro: 'Selected work, each with stack, evidence, and recognition.' },
   { id: 'skills', label: 'SKILLS', kicker: '03 / 06', heading: 'Skill grid', intro: 'Select a node to inspect its branch.' },
   { id: 'experience', label: 'EXPERIENCE', kicker: '04 / 06', heading: 'Experience', intro: 'Roles and impact.' },
   { id: 'recognition', label: 'RECOGNITION', kicker: '05 / 06', heading: 'Recognition', intro: 'The trophy room: wins on the shelf, credentials in the case.' },
   { id: 'contact', label: 'CONTACT', kicker: '06 / 06', heading: 'Contact', intro: 'Open to internships and collaboration.' },
 ]
 
-export const counts = { systems: 5, roles: 4, certs: 7, awards: 8 }
+export const counts = { projects: 5, roles: 4, certs: 7, awards: 8 }

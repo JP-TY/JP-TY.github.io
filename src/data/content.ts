@@ -45,21 +45,21 @@ export interface TimelineStop {
 
 export const profile = {
   name: 'James Gabriel Elijah Ty',
-  role: 'Cloud Engineer · CS Undergraduate',
+  role: '3× AWS Certified · GitHub Campus Expert · BS Computer Science, UP Cebu',
   school: 'University of the Philippines Cebu',
   degree: 'BS Computer Science',
   expected: 'July 2027',
   location: 'Cebu City, Philippines',
   email: 'jamesty016@gmail.com',
   github: 'https://github.com/JP-TY',
-  linkedin: 'https://www.linkedin.com/in/james-gabriel-elijah-ty-6a7b0a334/',
+  linkedin: 'https://www.linkedin.com/in/james-gabriel-elijah-ty-89a157302/',
   about: [
-    'I am a computer science undergraduate at the University of the Philippines Cebu working across cloud infrastructure, applied AI, and system design: containerized scoring platforms, decision-support systems, and transaction safety layers.',
-    'Currently a research and developer intern at ISCOLab, a GitHub Campus Expert, and lead of the AWS Student Builder Group at UP Cebu. I also governed UPCSG, the university premier CS organization, directing hackathons across 10 schools and mentoring 75 volunteers.',
+    'James Gabriel Elijah Ty is a Computer Science student at UP Cebu, a 3× AWS Certified developer, Lead of the AWS Student Builder Group – UP Cebu, and the very first GitHub Campus Expert in the Visayas. A former Executive Director of the UP Computer Science Guild, he is an international hackathon winner who placed 2nd Runner-Up at the Huawei Developer Competition 2025 APAC and emerged as Champion at the Philippine Junior Data Science Challenge 2024. As a systems and data science enthusiast, James actively leads technical mentorship initiatives and practical software workshops to bridge the gap between academic theory and industry practice.',
+    'Completed a research and developer internship at ISCOLab. Now a GitHub Campus Expert and lead of the AWS Student Builder Group at UP Cebu. I also governed UPCSG, the university premier CS organization, directing hackathons across 10 schools and mentoring 75 volunteers.',
   ],
 }
 
-export const systems: SystemEntry[] = [
+export const projects: ProjectEntry[] = [
   {
     id: 'creditpass',
     name: 'CreditPass',

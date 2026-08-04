@@ -177,11 +177,11 @@ export const timeline: TimelineStop[] = [
       'Selected through a 1% acceptance process.',
       'Authored a community assessment and inclusion framework; set conduct, async pathways, and event accessibility guides.',
     ],
-    stat: 'TOP 1%',
+    stat: '1% ACCEPTANCE RATE',
   },
   {
     period: 'JUN 2025 – JUN 2026',
-    org: 'UP Computer Science Group',
+    org: 'UP Computer Science Guild',
     role: 'Executive Director',
     bullets: [
       'Governed flagship programming, hackathons, and workshops end to end.',
@@ -191,7 +191,7 @@ export const timeline: TimelineStop[] = [
   },
   {
     period: 'JUN 2024 – JUN 2025',
-    org: 'UP Computer Science Group',
+    org: 'UP Computer Science Guild',
     role: 'Education and Development Director',
     bullets: [
       'Ran upskilling workshops for 50 students and restructured peer tutoring serving 50 students.',

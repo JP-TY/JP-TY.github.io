@@ -14,7 +14,7 @@ import { coalesce, veilTo } from './ui/transitions'
 function animateCounts(root: ParentNode = document): void {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const targets: Record<string, number> = {
-    systems: counts.systems,
+    projects: counts.projects,
     roles: counts.roles,
     certs: counts.certs,
     awards: counts.awards,
@@ -47,6 +47,7 @@ function paint(route: Exclude<RouteId, 'menu'>): void {
   kicker.textContent = meta.kicker
   heading.textContent = meta.heading
   intro.textContent = meta.intro
+  intro.hidden = route === 'recognition' || route === 'profile' || route === 'skills'
   body.innerHTML = ''
   body.appendChild(renderBody(route))
   animateCounts(body)

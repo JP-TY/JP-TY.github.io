@@ -1,9 +1,9 @@
-/** Hash router: #/menu, #/profile, #/systems, #/skills, #/experience, #/recognition, #/contact */
+/** Hash router: #/menu, #/profile, #/projects, #/skills, #/experience, #/recognition, #/contact */
 
 export type RouteId =
   | 'menu'
   | 'profile'
-  | 'systems'
+  | 'projects'
   | 'skills'
   | 'experience'
   | 'recognition'
@@ -12,7 +12,7 @@ export type RouteId =
 export const ROUTES: RouteId[] = [
   'menu',
   'profile',
-  'systems',
+  'projects',
   'skills',
   'experience',
   'recognition',

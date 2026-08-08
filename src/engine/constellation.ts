@@ -1,6 +1,7 @@
 /**
  * Constellation: the skill map rendered the way the boot hole is made.
- * Hexagon outlines, Lucide glyphs, and the JTY monogram are all constructed
+ * Hexagon outlines, Lucide glyphs, brand marks, and the portrait medallion
+ * are all constructed
  * from animated dot-matrix dither quantized through a time-jittered Bayer
  * threshold, with traveling pulses on the core traces. DOM buttons stay on
  * top as transparent hit-areas (click, keyboard, focus); the canvas is pure
@@ -40,9 +41,14 @@ function serializeKids(kids: Kid[]): string {
     .join('')
 }
 
-function iconSVG(icon: unknown, size: number): string {
+export function iconSVG(icon: unknown, size: number, stroke = '#fff'): string {
+  // Brand marks arrive as raw SVG path data and render filled; lucide
+  // glyphs arrive as node arrays and render stroked like before.
+  if (typeof icon === 'string') {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="#fff"><path d="${icon}"/></svg>`
+  }
   const kids = Array.isArray(icon) ? (icon as Kid[]) : []
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${serializeKids(kids)}</svg>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${serializeKids(kids)}</svg>`
 }
 
 function loadImage(src: string): Promise<HTMLImageElement | null> {
@@ -110,7 +116,8 @@ export interface CNode {
   y: number
   w: number
   h: number
-  art: { icon: unknown } | { text: string }
+  art: { icon: unknown; box?: number } | { text: string; w?: number; h?: number; px?: number } | { img: string; box?: number; ink?: boolean; color?: boolean }
+  caption?: string
 }
 
 export interface CTrace {

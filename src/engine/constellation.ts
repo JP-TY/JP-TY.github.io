@@ -64,10 +64,10 @@ interface Raster {
   data: Uint8ClampedArray
   w: number
   h: number
+  color: boolean
 }
 
-async function rasterizeIcon(icon: unknown, size: number): Promise<Raster | null> {
-  const img = await loadImage(`data:image/svg+xml;utf8,${encodeURIComponent(iconSVG(icon, size))}`)
+export async function rasterizeSVG(svg: string, size: number): Promise<Raster | null> {  const img = await loadImage(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`)
   if (!img) return null
   const c = document.createElement('canvas')
   c.width = size
@@ -75,7 +75,112 @@ async function rasterizeIcon(icon: unknown, size: number): Promise<Raster | null
   const g = c.getContext('2d', { willReadFrequently: true })
   if (!g) return null
   g.drawImage(img, 0, 0, size, size)
-  return { data: g.getImageData(0, 0, size, size).data, w: size, h: size }
+  return { data: g.getImageData(0, 0, size, size).data, w: size, h: size, color: false }
+}
+
+/** Photos rasterize cover-fit with luminance folded into alpha so the
+ *  animated threshold dithers the image instead of filling a slab.
+ *  Icon PNGs (dark-on-transparent) use ink mode: alpha times the
+ *  stronger of luminance and darkness, so dark marks survive.
+ *  Color mode keeps the source RGB so the portrait reads in full color. */
+async function rasterizePhoto(src: string, size: number, ink = false, color = false): Promise<Raster | null> {
+  const img = await loadImage(src)
+  if (!img || !img.naturalWidth || !img.naturalHeight) return null
+  const c = document.createElement('canvas')
+  c.width = size
+  c.height = size
+  const g = c.getContext('2d', { willReadFrequently: true })
+  if (!g) return null
+  const s = Math.max(size / img.naturalWidth, size / img.naturalHeight)
+  const dw = img.naturalWidth * s
+  const dh = img.naturalHeight * s
+  g.drawImage(img, (size - dw) / 2, (size - dh) / 2, dw, dh)
+  const data = g.getImageData(0, 0, size, size).data
+  for (let i = 0; i < data.length; i += 4) {
+    const lum = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255
+    const mask = ink ? (data[i + 3] / 255) * Math.max(lum, 1 - lum) : lum
+    if (!color) {
+      data[i] = 255
+      data[i + 1] = 180
+      data[i + 2] = 90
+      data[i + 3] = Math.round(mask * 255)
+    }
+  }
+  return { data, w: size, h: size, color }
+}
+
+/** Paint a photo URL into a canvas as animated amber dot-matrix.
+ *  Adds `has-photo` to the wrapping li on first paint; canvases that
+ *  fail to load stay blank so the fallback socket shows instead. */
+export async function ditherInto(canvas: HTMLCanvasElement, src: string, cells: number): Promise<() => void> {
+  const noop = (): void => undefined
+  const img = await loadImage(src)
+  if (!img || !img.naturalWidth || !img.naturalHeight) return noop
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return noop
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const off = document.createElement('canvas')
+  off.width = cells
+  off.height = cells
+  const g = off.getContext('2d', { willReadFrequently: true })
+  if (!g) return noop
+  const s = Math.max(cells / img.naturalWidth, cells / img.naturalHeight)
+  const dw = img.naturalWidth * s
+  const dh = img.naturalHeight * s
+  g.drawImage(img, (cells - dw) / 2, (cells - dh) / 2, dw, dh)
+  const data = g.getImageData(0, 0, cells, cells).data
+  const lum: number[] = []
+  for (let i = 0; i < data.length; i += 4) {
+    lum.push(((0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255) * (data[i + 3] / 255))
+  }
+  // Stretch to full range so dark source art still reads as solid amber.
+  let lo = 1
+  let hi = 0
+  for (const v of lum) {
+    if (v < lo) lo = v
+    if (v > hi) hi = v
+  }
+  const span = Math.max(0.001, hi - lo)
+  for (let i = 0; i < lum.length; i += 1) lum[i] = Math.pow((lum[i] - lo) / span, 1.25)
+  const W = canvas.width
+  const H = canvas.height
+  const cell = W / cells
+  const radius = cells / 2
+  const draw = (t: number): void => {
+    const ts = t / 1000
+    ctx.clearRect(0, 0, W, H)
+    for (let y = 0; y < cells; y += 1) {
+      for (let x = 0; x < cells; x += 1) {
+        // Circular medallion mask so square source corners never print.
+        const dx = x + 0.5 - radius
+        const dy = y + 0.5 - radius
+        if (dx * dx + dy * dy > radius * radius) continue
+        const a = lum[y * cells + x]
+        if (a < 0.06) continue
+        const tw = 0.85 + 0.15 * Math.sin(ts * 1.8 + x * 0.9 + y * 1.1)
+        const thr = (BAYER[(y % 4) * 4 + (x % 4)] / 16) * 0.42
+        if (a * tw < thr) continue
+        const alpha = Math.min(1, a + 0.4).toFixed(3)
+        // Duotone phosphor: hot core highlights, amber body — same
+        // pair as the constellation dot() so badges sit in the scene.
+        ctx.fillStyle = a > 0.65 ? `rgba(255, 217, 122, ${alpha})` : `rgba(245, 181, 68, ${alpha})`
+        const d = Math.max(1.4, cell - 0.5)
+        ctx.fillRect(x * cell + (cell - d) / 2, y * cell + (cell - d) / 2, d, d)
+      }
+    }
+  }
+  draw(1000)
+  canvas.closest('li')?.classList.add('has-photo')
+  if (reduced) return noop
+  let raf = requestAnimationFrame(function frame(t: number): void {
+    draw(t)
+    raf = requestAnimationFrame(frame)
+  })
+  return () => cancelAnimationFrame(raf)
+}
+
+export async function rasterizeIcon(icon: unknown, size: number): Promise<Raster | null> {
+  return rasterizeSVG(iconSVG(icon, size), size)
 }
 
 async function rasterizeText(text: string, w: number, h: number, px: number): Promise<Raster | null> {
@@ -94,7 +199,7 @@ async function rasterizeText(text: string, w: number, h: number, px: number): Pr
   g.textBaseline = 'middle'
   g.fillStyle = '#fff'
   g.fillText(text, w / 2, h / 2 + 1)
-  return { data: g.getImageData(0, 0, w, h).data, w, h }
+  return { data: g.getImageData(0, 0, w, h).data, w, h, color: false }
 }
 
 /** Flat-top hexagon vertices matching the old clip-path shape. */

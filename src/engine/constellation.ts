@@ -261,15 +261,31 @@ export function startConstellation(canvas: HTMLCanvasElement, model: CModel): ()
 
   // Rasterize every glyph up front; the loop starts once they land.
   const rasters = new Map<CNode, Raster>()
+  const captions = new Map<CNode, Raster>()
   const ready = (async () => {
     await Promise.all(
       model.nodes.map(async (n) => {
-        const box = n.kind === 'core' ? 0 : n.kind === 'branch' ? 34 : 24
+        const box =
+          n.kind === 'core'
+            ? 0
+            : 'box' in n.art && typeof n.art.box === 'number'
+              ? n.art.box
+              : n.kind === 'branch'
+                ? 34
+                : 24
         const r =
-          'text' in n.art
-            ? await rasterizeText(n.art.text, 64, 28, 21)
-            : await rasterizeIcon(n.art.icon, box)
+          'img' in n.art
+            ? await rasterizePhoto(n.art.img, n.art.box ?? 64, n.art.ink ?? false, n.art.color ?? false)
+            : 'text' in n.art
+              ? await rasterizeText(n.art.text, n.art.w ?? 64, n.art.h ?? 28, n.art.px ?? 21)
+              : typeof n.art.icon === 'string' && n.art.icon.includes('<svg')
+                ? await rasterizeSVG(n.art.icon, box)
+                : await rasterizeIcon(n.art.icon, box)
         if (r) rasters.set(n, r)
+        if (n.caption) {
+          const c = await rasterizeText(n.caption, 220, 24, 15)
+          if (c) captions.set(n, c)
+        }
       }),
     )
   })()
@@ -282,6 +298,53 @@ export function startConstellation(canvas: HTMLCanvasElement, model: CModel): ()
       ? `rgba(255, 196, 107, ${alpha.toFixed(3)})`
       : `rgba(255, 165, 59, ${alpha.toFixed(3)})`
     ctx.fillRect(x - s / 2, y - s / 2, s, s)
+  }
+
+  // Point-in-convex-polygon for clipping a blit inside its hexagon.
+  const inPoly = (px: number, py: number, v: [number, number][]): boolean => {
+    let sign = 0
+    for (let i = 0; i < v.length; i += 1) {
+      const [ax, ay] = v[i]
+      const [bx, by] = v[(i + 1) % v.length]
+      const s = Math.sign((bx - ax) * (py - ay) - (by - ay) * (px - ax))
+      if (s === 0) continue
+      if (sign === 0) sign = s
+      else if (s !== sign) return false
+    }
+    return true
+  }
+
+  // Glyph blit quantized through the animated threshold; pass verts to
+  // clip the blit inside a polygon (the portrait stays in its hex).
+  // Gain thins a blit out — photos get a lower gain so the dot-matrix
+  // reads instead of filling a slab.
+  const drawRaster = (
+    r: Raster,
+    ox: number,
+    oy: number,
+    live: boolean,
+    ts: number,
+    clip: [number, number][] | null,
+    gain = 1,
+  ): void => {
+    for (let gy = 0; gy < r.h; gy += 1) {
+      for (let gx = 0; gx < r.w; gx += 1) {
+        const idx = (gy * r.w + gx) * 4
+        const a = (r.data[idx + 3] / 255) * gain
+        if (a < 0.05) continue
+        if (clip && !inPoly(ox + gx, oy + gy, clip)) continue
+        const thr = (BAYER[(gy % 4) * 4 + (gx % 4)] / 16) * 0.6 + 0.1 * Math.sin(ts * 2.5 + gx * 0.5 + gy * 0.4)
+        if (a < thr) continue
+        const s = 1 + a * 1.1
+        if (r.color) {
+          const alpha = ((live ? 1 : 0.45) * Math.min(1, a + 0.15)).toFixed(3)
+          ctx.fillStyle = `rgba(${r.data[idx]}, ${r.data[idx + 1]}, ${r.data[idx + 2]}, ${alpha})`
+          ctx.fillRect(ox + gx - s / 2, oy + gy - s / 2, s, s)
+          continue
+        }
+        dot(ox + gx, oy + gy, s, a > 0.7, (live ? 1 : 0.45) * Math.min(1, a + 0.15))
+      }
+    }
   }
 
   const draw = (t: number) => {
@@ -340,21 +403,20 @@ export function startConstellation(canvas: HTMLCanvasElement, model: CModel): ()
           dot(cx + Math.cos(pa) * pr, cy + Math.sin(pa) * pr * 0.87, 1.6, true, Math.max(0, 0.8 - (pr - n.w / 2) / 40))
         }
       }
-      // glyph, quantized through the same animated threshold
+      // glyph, quantized through the same animated threshold; the
+      // portrait medallion is clipped along its hexagon and rendered
+      // thinner so the dot-matrix reads
       const r = rasters.get(n)
       if (r) {
-        const ox = cx - r.w / 2
-        const oy = cy - r.h / 2
-        for (let gy = 0; gy < r.h; gy += 1) {
-          for (let gx = 0; gx < r.w; gx += 1) {
-            const a = r.data[(gy * r.w + gx) * 4 + 3] / 255
-            if (a < 0.05) continue
-            const thr = (BAYER[(gy % 4) * 4 + (gx % 4)] / 16) * 0.6 + 0.1 * Math.sin(ts * 2.5 + gx * 0.5 + gy * 0.4)
-            if (a < thr) continue
-            const s = 1 + a * 1.1
-            dot(ox + gx, oy + gy, s, a > 0.7, (live ? 1 : 0.45) * Math.min(1, a + 0.15))
-          }
-        }
+        const isPhoto = 'img' in n.art
+        const colorful = isPhoto && 'color' in n.art && n.art.color === true
+        const gain = !isPhoto ? 1 : 'ink' in n.art && n.art.ink ? 1 : colorful ? 1 : 0.6
+        drawRaster(r, cx - r.w / 2, cy - r.h / 2, live, ts, isPhoto ? verts : null, gain)
+      }
+      // name caption riding below the core medallion
+      const cap = captions.get(n)
+      if (cap) {
+        drawRaster(cap, cx - cap.w / 2, cy + n.h / 2 + 12, live, ts, null)
       }
     }
   }

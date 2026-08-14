@@ -77,12 +77,15 @@ export function startDream(
 
   let W = 0
   let H = 0
+  let NAV_W = 0
+  const availW = () => Math.max(320, W - NAV_W)
   const resize = () => {
     const parent = canvas.parentElement
     W = Math.max(320, parent?.clientWidth || window.innerWidth)
     H = Math.max(480, parent?.clientHeight || window.innerHeight)
     canvas.width = W
     canvas.height = H
+    NAV_W = document.getElementById('side-nav')?.getBoundingClientRect().width ?? 0
   }
   resize()
   window.addEventListener('resize', resize)
@@ -116,14 +119,16 @@ export function startDream(
   // auto-fit: measure the outermost orbit plus the largest disc against
   // both half-axes and scale the whole system (orbits, bodies, tags)
   // down on narrow viewports so nothing ever clips. Wide screens keep
-  // scale 1 and render full-size.
+  // scale 1 and render full-size. The system is laid out right of the
+  // index column, centered within the remaining space.
   const fitSystem = (): { U: number; maxR: number } => {
-    const U0 = Math.min(Math.max(Math.min(W, H) / 800, 0.7), 1.3)
-    const maxR0 = Math.min(W, H) * 0.7
+    const aw = availW()
+    const U0 = Math.min(Math.max(Math.min(aw, H) / 800, 0.7), 1.3)
+    const maxR0 = Math.min(aw, H) * 0.7
     const Rfit = LARGEST_DISC * U0
     const ex = ORBIT_MAX * maxR0 * 1.15 + Rfit
     const ey = ORBIT_MAX * maxR0 * TILT + Rfit
-    const scale = Math.max(0.35, Math.min(1, (W / 2 - 16) / ex, (H / 2 - 16) / ey))
+    const scale = Math.max(0.35, Math.min(1, (aw / 2 - 44) / ex, (H / 2 - 44) / ey))
     return { U: U0 * scale, maxR: maxR0 * scale }
   }
 

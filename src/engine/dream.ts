@@ -136,7 +136,8 @@ export function startDream(
     const ts = reduced ? 1.2 : t / 1000
     ctx.clearRect(0, 0, W, H)
     const { U, maxR } = fitSystem()
-    const cx = W * 0.5
+    const aw = availW()
+    const cx = NAV_W + aw * 0.5
     const cy = H * 0.5
     const rot = ts * 0.05
     centers = []
@@ -364,7 +365,7 @@ export function startDream(
         ax += rx * 16
         ay += ry * 16
       }
-      ax = Math.min(Math.max(ax, 8), W - 8)
+      ax = Math.min(Math.max(ax, w + 10), W - w - 10)
       ay = Math.min(Math.max(ay, 20), H - 20)
       anchors[i] = { x: ax, y: ay, align, w }
     }

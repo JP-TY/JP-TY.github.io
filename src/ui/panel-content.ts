@@ -1,45 +1,56 @@
 import {
   awards,
+  awardPhotos,
   branches,
   certifications,
+  certBadges,
   profile,
-  systems,
+  projects,
   timeline,
 } from '../data/content'
 import type { RouteId } from '../engine/router'
 import { blip } from '../engine/audio'
-import { startPortrait } from '../engine/portrait'
 import { startStardust } from '../engine/stardust'
 import {
   Activity,
+  Award,
   BookOpen,
   Boxes,
   Brain,
-  Cpu,
   Cloud,
-  CloudCog,
-  Cloudy,
   Code,
-  Container,
-  Database,
-  Eye,
-  FileCode,
-  Flame,
-  Gauge,
-  GitBranch,
+  Crown,
+  Flag,
+  Gem,
   Globe,
   HardDrive,
   Hash,
-  Layers,
-  Network,
+  Medal,
   RefreshCcw,
-  Server,
+  Shield,
   Ship,
-  Terminal,
+  Star,
+  Trophy,
   Workflow,
-  Zap,
 } from 'lucide'
-import { startConstellation } from '../engine/constellation'
+import { startConstellation, iconSVG } from '../engine/constellation'
+import { siGithub, siGmail } from 'simple-icons'
+import sagemakerURL from '../assets/Amazon-Web-Service-Sagemaker--Streamline-Ultimate.png'
+import {
+  siDocker,
+  siGithubactions,
+  siGo,
+  siHuawei,
+  siOpencv,
+  siPostgresql,
+  siPython,
+  siPytorch,
+  siRedis,
+  siSupabase,
+  siTensorflow,
+  siTerraform,
+  siTypescript,
+} from 'simple-icons'
 import type { CModel, CNode, CTrace } from '../engine/constellation'
 
 type Icon = unknown
@@ -52,29 +63,43 @@ const HEX_SIZES = {
   item: { w: 52, h: 45 },
 }
 const BRANCH_ICONS: Record<string, Icon> = { cloud: Cloud, ai: Brain, systems: Workflow, languages: Code }
+
+/** AWS never shipped a public mark in the icon set, so the wordmark +
+ *  smile is redrawn here, same silhouette as the console badge. */
+const awsMark = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text x="12" y="12.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="8" fill="#fff">aws</text><path d="M5.5 15.2 Q12 19.6 18.5 14.4" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M16.2 13.1 L18.9 14.2 L17.1 16.6 Z" fill="#fff"/></svg>`
+
+/** Item art, with size overrides where a mark needs room to read —
+ *  AWS renders bigger than the standard 24px box, SageMaker uses the
+ *  uploaded PNG rasterized like the portrait medallion. */
+const nodeArt = (name: string): CNode['art'] =>
+  name === 'AWS'
+    ? { icon: ITEM_ICONS[name] ?? Code, box: 40 }
+    : name === 'SageMaker'
+      ? { img: sagemakerURL, box: 28, ink: true }
+      : { icon: ITEM_ICONS[name] ?? Code }
+
 const ITEM_ICONS: Record<string, Icon> = {
-  AWS: CloudCog,
-  'Huawei Cloud': Cloudy,
-  Docker: Container,
-  Terraform: Layers,
-  'GitHub Actions': GitBranch,
-  Redis: Zap,
-  PostgreSQL: Database,
-  TensorFlow: Network,
-  PyTorch: Flame,
-  SageMaker: Cpu,
+  AWS: awsMark,
+  'Huawei Cloud': siHuawei.path,
+  Docker: siDocker.path,
+  Terraform: siTerraform.path,
+  'GitHub Actions': siGithubactions.path,
+  Redis: siRedis.path,
+  PostgreSQL: siPostgresql.path,
+  TensorFlow: siTensorflow.path,
+  PyTorch: siPytorch.path,
   RAG: BookOpen,
-  'Computer Vision': Eye,
-  Supabase: Server,
+  'Computer Vision': siOpencv.path,
+  Supabase: siSupabase.path,
   Microservices: Boxes,
   'REST APIs': Globe,
   'Escrow Lifecycles': RefreshCcw,
   'Event-Driven Flows': Activity,
   Caching: HardDrive,
   'Container Orchestration': Ship,
-  TypeScript: FileCode,
-  Python: Terminal,
-  Go: Gauge,
+  TypeScript: siTypescript.path,
+  Python: siPython.path,
+  Go: siGo.path,
   'C#': Hash,
 }
 // Hand-spaced so nothing collides. Order matches each branch's items array.

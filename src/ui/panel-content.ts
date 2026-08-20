@@ -139,40 +139,110 @@ function el(html: string): HTMLElement {
   return t.content.firstElementChild as HTMLElement
 }
 
+/** D-pad for tile clusters: arrows jump focus to the nearest tile in
+ *  that direction, measured from live rects so grids and rails both work.
+ *  When nothing lies that way the event is left alone, so paging and
+ *  scrolling keep working at the edges. */
+function wireArrowNav(root: HTMLElement, selector: string): void {
+  const dirs: Record<string, [number, number]> = {
+    ArrowUp: [0, -1],
+    ArrowDown: [0, 1],
+    ArrowLeft: [-1, 0],
+    ArrowRight: [1, 0],
+  }
+  root.addEventListener('keydown', (e) => {
+    const target = e.target as HTMLElement | null
+    if (!target?.matches(selector)) return
+    const dir = dirs[e.key]
+    if (!dir) return
+    const tiles = [...root.querySelectorAll<HTMLElement>(selector)]
+    const r0 = target.getBoundingClientRect()
+    const x0 = r0.left + r0.width / 2
+    const y0 = r0.top + r0.height / 2
+    let best: HTMLElement | null = null
+    let bestScore = Infinity
+    for (const b of tiles) {
+      if (b === target) continue
+      const r = b.getBoundingClientRect()
+      const dx = r.left + r.width / 2 - x0
+      const dy = r.top + r.height / 2 - y0
+      const along = dx * dir[0] + dy * dir[1]
+      if (along <= 4) continue
+      const lateral = Math.abs(dx * dir[1] - dy * dir[0])
+      const score = along + lateral * 2.5
+      if (score < bestScore) {
+        bestScore = score
+        best = b
+      }
+    }
+    if (!best) return
+    e.preventDefault()
+    best.focus()
+    best.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  })
+}
+
 function chips(items: string[]): string {
   return `<ul class="chips">${items.map((c) => `<li>${c}</li>`).join('')}</ul>`
 }
 
 function renderProfile(): HTMLElement {
   const doc = el(`
-    <div class="doc">
-      <figure class="portrait-frame rise">
-        <img class="portrait-photo" src="/profile.jpg" alt="Portrait of James Gabriel Elijah Ty" width="1222" height="1214" loading="lazy">
-        <canvas class="portrait-fx" role="img" aria-label="Amber portrait of James Gabriel Elijah Ty" hidden></canvas>
-      </figure>
-      <p class="rise">${profile.about[0]}</p>
-      <p class="rise">${profile.about[1]}</p>
+    <div class="doc profile-doc">
+      <div class="id-hero rise">
+        <figure class="portrait-frame">
+          <img class="portrait-photo" src="/profile.webp" alt="Portrait of James Gabriel Elijah Ty" width="700" height="695" loading="lazy" decoding="async">
+        </figure>
+        <div class="id-card">
+          <p class="id-kicker">IDENTITY.SYS — ONLINE</p>
+          <h3 class="id-name">${profile.name}</h3>
+          <p class="id-role">${profile.role}</p>
+          <dl class="mini-facts">
+            <div><dt>LOCATION</dt><dd>${profile.location}</dd></div>
+            <div><dt>EXPECTED GRADUATION</dt><dd>${profile.expected}</dd></div>
+          </dl>
+          <div class="id-social">
+            <a class="soc" href="mailto:${profile.email}" aria-label="Email James Ty" title="Email"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${siGmail.path}"/></svg></a>
+            <a class="soc" href="${profile.github}" target="_blank" rel="noopener noreferrer" aria-label="James Ty on GitHub" title="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${siGithub.path}"/></svg></a>
+            <a class="soc" href="${profile.linkedin}" target="_blank" rel="noopener noreferrer" aria-label="James Ty on LinkedIn" title="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="in-tile" x="3" y="3" width="18" height="18" rx="3.5"/><text class="in-text" x="12" y="16.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="12.5">in</text></svg></a>
+          </div>
+        </div>
+      </div>
+      <div class="profile-grid">
+        <div class="rise">
+          <p>${profile.about[0]}</p>
+          <p>${profile.about[1]}</p>
+        </div>
+        <aside class="ex-card rise">
+          <p class="ex-kicker">HIGHLIGHTS</p>
+          <ol class="ex-list">
+            ${timeline
+              .slice(0, 3)
+              .map(
+                (t) => `<li><div><p class="ex-role">${t.role}</p><p class="ex-org">${t.org} · ${t.period}</p></div></li>`,
+              )
+              .join('')}
+          </ol>
+          <a class="ex-more" href="#/experience">FULL RECORD →</a>
+        </aside>
+      </div>
       <dl class="facts rise">
         <div><dt>SCHOOL</dt><dd>${profile.school} — ${profile.degree}, expected ${profile.expected}</dd></div>
-        <div><dt>BASE</dt><dd>${profile.location}</dd></div>
-        <div><dt>EXCHANGE</dt><dd>UTokyo Virtual Exchange, CALL Apr to Jul 2026: evaluated NounTown and proposed a GenAI and VR language-learning framework.</dd></div>
+        <div><dt>EXCHANGE</dt><dd><span class="xchg-top"><span>UTokyo Virtual Exchange</span><span>Apr – Jul 2026</span></span><span class="xchg-sub">Computer Assisted Language Learning</span></dd></div>
       </dl>
     </div>`)
-  const canvas = doc.querySelector<HTMLCanvasElement>('.portrait-fx')
-  const photo = doc.querySelector<HTMLImageElement>('.portrait-photo')
-  if (canvas && photo) fxStop = startPortrait(canvas, photo, '/profile.jpg')
   return doc
 }
 
-function renderSystems(): HTMLElement {
+function renderProjects(): HTMLElement {
   const wrap = el('<div class="doc"></div>')
-  systems.forEach((s, i) => {
+  projects.forEach((s, i) => {
     wrap.appendChild(
       el(`
-      <article class="system rise">
-        <p class="system-kicker">SYSTEM 0${i + 1}</p>
+      <article class="project rise">
+        <p class="project-kicker">PROJECT 0${i + 1}</p>
         <h3>${s.name}</h3>
-        <p class="system-tag">${s.tagline}</p>
+        <p class="project-tag">${s.tagline}</p>
         ${chips(s.tech)}
         <ul class="bullets">${s.bullets.map((b) => `<li>${b}</li>`).join('')}</ul>
         <p class="award">▲ ${s.award}</p>

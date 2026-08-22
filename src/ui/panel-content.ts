@@ -287,7 +287,9 @@ function renderSkills(): HTMLElement {
     })
   }
   const wire = (btn: HTMLButtonElement | null, id: string): void => {
-    btn?.addEventListener('click', () => select(id))
+    btn?.addEventListener('click', () => {
+      select(id)
+    })
     btn?.addEventListener('mouseenter', () => {
       hover.branch = id
     })

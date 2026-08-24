@@ -309,7 +309,9 @@ function renderSkills(): HTMLElement {
     ctraces.push({ x1: CORE_POS.x, y1: CORE_POS.y, x2: lay.branch.x, y2: lay.branch.y, major: true })
     cnodes.push({
       branch: b.id, kind: 'core', x: CORE_POS.x, y: CORE_POS.y,
-      w: HEX_SIZES.core.w, h: HEX_SIZES.core.h, art: { text: 'JTY' },
+      w: HEX_SIZES.core.w, h: HEX_SIZES.core.h,
+      art: { img: '/Ty2x2.webp', color: true },
+      caption: 'JAMES TY',
     })
     const lit = b.id === activeBranch ? ' is-lit' : ''
     const on = b.id === activeBranch
@@ -327,7 +329,7 @@ function renderSkills(): HTMLElement {
       ctraces.push({ x1: lay.branch.x, y1: lay.branch.y, x2: p.x, y2: p.y, major: false })
       cnodes.push({
         branch: b.id, kind: 'item', x: p.x, y: p.y,
-        w: HEX_SIZES.item.w, h: HEX_SIZES.item.h, art: { icon: ITEM_ICONS[name] ?? Code },
+        w: HEX_SIZES.item.w, h: HEX_SIZES.item.h, art: nodeArt(name),
       })
       const item = el(
         `<div class="star-node${lit}" style="left:${px(p.x)};top:${py(p.y)}"><button type="button" data-branch="${b.id}" class="hex item" aria-pressed="${on ? 'true' : 'false'}" aria-label="${name}, ${b.label}"></button><span class="hex-label item-label" aria-hidden="true">${name}</span></div>`,

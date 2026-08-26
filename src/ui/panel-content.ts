@@ -432,50 +432,127 @@ function tierOf(result: string): Tier {
   return 'bronze'
 }
 
-const TIER_MEDAL: Record<Tier, string> = { gold: '◆', silver: '▲', bronze: '●' }
-
 function renderRecognition(): HTMLElement {
   const wrap = el('<div class="doc"></div>')
-  wrap.appendChild(el(`<h3 class="sub rise">Awards</h3>`))
-  const filters = el('<div class="filter-row rise" role="group" aria-label="Filter awards"></div>')
+  const h3Awards = el(`<h3 class="sub rise">Awards</h3>`)
+  const GEM_ICONS = [Trophy, Medal, Crown, Shield, Star, Gem, Award, Flag]
   const list = el('<ul class="trophies"></ul>')
-  const items: HTMLElement[] = awards.map((a) => {
+  const closePopup = (): void => {
+    wrap.querySelector('.honor-pop-backdrop')?.remove()
+    wrap.querySelector('.honor-pop')?.remove()
+  }
+  const openPopup = (kicker: string, title: string, meta: string, photos: string[], invoker: HTMLButtonElement | null): void => {
+    closePopup()
+    const back = el('<div class="honor-pop-backdrop"></div>')
+    const pop = el(
+      `<div class="honor-pop" role="dialog" aria-modal="true" aria-label="${title}"><p class="node-pop-kicker">${kicker}</p><h3 class="node-pop-title">${title}</h3><p class="honor-pop-meta">${meta}</p><div class="honor-pop-photos">${photos.map((src) => `<img src="${src}" alt="" loading="lazy" decoding="async">`).join('')}</div><button type="button" class="node-pop-close">CLOSE ✕</button></div>`,
+    )
+    const closeBtn = pop.querySelector<HTMLButtonElement>('.node-pop-close')
+    const close = (): void => {
+      document.removeEventListener('keydown', onKey, true)
+      back.remove()
+      pop.remove()
+      invoker?.focus({ preventScroll: true })
+    }
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        close()
+      } else if (e.key === 'Tab') {
+        // The dialog owns focus while open; nothing behind it is reachable.
+        e.preventDefault()
+        closeBtn?.focus({ preventScroll: true })
+      }
+    }
+    document.addEventListener('keydown', onKey, true)
+    back.addEventListener('click', close)
+    closeBtn?.addEventListener('click', close)
+    wrap.append(back, pop)
+    closeBtn?.focus({ preventScroll: true })
+  }
+  const markAward = (btn: HTMLButtonElement | null): (typeof awards)[number] | undefined => {
+    if (!btn) return undefined
+    list.querySelectorAll('.gem').forEach((o) => {
+      const on = o === btn
+      o.classList.toggle('is-active', on)
+      o.setAttribute('aria-pressed', on ? 'true' : 'false')
+    })
+    return awards[Number(btn.dataset.index)]
+  }
+  const selectAward = (btn: HTMLButtonElement | null): void => {
+    if (!btn) return
+    blip(660, 50)
+    const a = markAward(btn)
+    if (a) {
+      openPopup('SELECTED HONOR', a.name, `${a.project ? `${a.project} · ` : ''}${a.result}`, awardPhotos[a.name] ?? [], btn)
+    }
+  }
+  const items: HTMLElement[] = awards.map((a, i) => {
     const tier = tierOf(a.result)
-    return el(`<li class="trophy tier-${tier} rise" data-tier="${tier}"><span class="trophy-medal" aria-hidden="true">${TIER_MEDAL[tier]}</span><span class="trophy-main"><span class="award-name">${a.name}</span>${a.project ? `<span class="award-proj">${a.project}</span>` : ''}</span><span class="award-result">${TIER_MEDAL[tier]} ${a.result}</span></li>`)
+    const photos = awardPhotos[a.name] ?? []
+    const title = (a.project ?? a.name).toUpperCase()
+    const li = el(`<li class="trophy tier-${tier} rise${photos.length ? ' photo' : ''}" data-tier="${tier}"></li>`)
+    const btn = photos.length
+      ? el(
+        `<button type="button" class="gem gem-win" aria-pressed="false" aria-label="${a.name}, ${a.result}"><span class="win-chrome" aria-hidden="true"><i></i><i></i><i></i><b>A-${String(i + 1).padStart(2, '0')}</b><em>${title}</em></span>${photos.length > 1
+          ? `<span class="win-trio" aria-hidden="true">${photos.map((src) => `<img class="award-img" src="${src}" alt="" loading="lazy" decoding="async">`).join('')}</span>`
+          : `<img class="award-img" src="${photos[0]}" alt="" loading="lazy" decoding="async">`}</button>`,
+      ) as HTMLButtonElement
+      : el(
+        `<button type="button" class="gem" aria-pressed="false" aria-label="${a.name}, ${a.result}"><span class="gem-face">${iconSVG(GEM_ICONS[i % GEM_ICONS.length], 34, 'currentColor')}</span></button>`,
+      ) as HTMLButtonElement
+    btn.dataset.index = String(i)
+    btn.addEventListener('click', () => selectAward(btn))
+    li.appendChild(btn)
+    return li
   })
   items.forEach((li) => list.appendChild(li))
-  const defs: [string, string][] = [['all', 'ALL'], ['gold', 'TOP HONORS'], ['silver', 'RUNNERS-UP'], ['bronze', 'MENTIONS']]
-  defs.forEach(([key, label]) => {
-    const b = document.createElement('button')
-    b.type = 'button'
-    b.className = `filter-btn${key === 'all' ? ' is-active' : ''}`
-    b.setAttribute('aria-pressed', key === 'all' ? 'true' : 'false')
-    b.textContent = label
-    b.addEventListener('click', () => {
-      blip(600, 50)
-      filters.querySelectorAll('.filter-btn').forEach((o) => {
-        const on = o === b
-        o.classList.toggle('is-active', on)
-        o.setAttribute('aria-pressed', on ? 'true' : 'false')
-      })
-      items.forEach((li) => {
-        li.hidden = key !== 'all' && li.dataset.tier !== key
-      })
-    })
-    filters.appendChild(b)
-  })
-  wrap.append(filters, list)
-  wrap.appendChild(el(`<h3 class="sub rise">Certifications</h3>`))
+  wireArrowNav(list, '.gem')
+  markAward(items[0]?.querySelector('.gem') as HTMLButtonElement | null)
+  const h3Certs = el(`<h3 class="sub rise">Certifications</h3>`)
   const kase = el('<div class="case rise"></div>')
-  const lid = el(`<button class="case-lid" type="button" aria-expanded="false"><span class="case-title">BADGE CASE</span><span class="case-count">${certifications.length} CREDENTIALS</span><span class="case-state">OPEN ▸</span></button>`) as HTMLButtonElement
-  const body = el('<div class="case-body"></div>')
-  body.setAttribute('hidden', '')
+  const lid = el(`<button class="case-lid" type="button" aria-expanded="true"><span class="case-title">BADGE CASE</span><span class="case-count">${String(awards.length).padStart(2, '0')} HONORS · ${String(certifications.length).padStart(2, '0')} CREDENTIALS</span><span class="case-state">CLOSE ▾</span></button>`) as HTMLButtonElement
+  const body = el('<div class="case-body open"></div>')
   const clip = el('<div class="case-clip"></div>')
-  clip.appendChild(
-    el(`<ul class="badges">${certifications.map((c, i) => `<li><span class="badge-disc" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span><span class="badge-name">${c}</span></li>`).join('')}</ul>`),
+  const markCert = (btn: HTMLButtonElement | null): void => {
+    if (!btn) return
+    clip.querySelectorAll('.gem').forEach((o) => {
+      const on = o === btn
+      o.classList.toggle('is-active', on)
+      o.setAttribute('aria-pressed', on ? 'true' : 'false')
+    })
+  }
+  const selectCert = (btn: HTMLButtonElement | null): void => {
+    if (!btn) return
+    blip(660, 50)
+    markCert(btn)
+    const name = btn.dataset.name ?? ''
+    const num = btn.dataset.num ?? '01'
+    const src = certBadges[name]
+    openPopup('SELECTED CREDENTIAL', name, `CREDENTIAL ${num} OF ${String(certifications.length).padStart(2, '0')}`, src ? [src] : [], btn)
+  }
+  const rail = el(
+    `<ul class="badges">${certifications
+      .map((c, i) => {
+        const num = String(i + 1).padStart(2, '0')
+        const photo = certBadges[c]
+        const inner = photo
+          ? `<span class="win-chrome" aria-hidden="true"><i></i><i></i><i></i><em>CRED ${num}</em></span><img class="badge-img" src="${photo}" alt="" loading="lazy" decoding="async">`
+          : `<span class="gem-face"><span class="badge-disc" aria-hidden="true">${num}</span></span>`
+        return `<li class="${photo ? 'has-img' : ''}"><button type="button" class="gem${photo ? ' gem-cwin' : ' gem-cert'}" aria-pressed="false" aria-label="${c}" data-num="${num}" data-name="${c}">${inner}</button></li>`
+      })
+      .join('')}</ul>`,
   )
+  clip.appendChild(rail)
+  clip.querySelectorAll<HTMLButtonElement>('.badges .gem').forEach((btn) => {
+    btn.addEventListener('click', () => selectCert(btn))
+  })
+  wireArrowNav(rail, '.gem')
+  markCert(clip.querySelector('.badges .gem'))
+  clip.prepend(h3Awards, list, h3Certs)
   body.appendChild(clip)
   kase.append(lid, body)
+  kase.appendChild(el('<div class="case-latch" aria-hidden="true"></div>'))
   wrap.appendChild(kase)
   const state = lid.querySelector('.case-state')
   lid.addEventListener('click', () => {

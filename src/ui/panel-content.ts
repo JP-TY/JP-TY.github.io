@@ -355,40 +355,7 @@ function renderSkills(): HTMLElement {
   fxStop = () => stops.forEach((s) => s())
   map.appendChild(field)
   // D-pad: arrows jump focus to the nearest node in that direction.
-  map.addEventListener('keydown', (e) => {
-    const target = e.target as HTMLElement | null
-    if (!target?.classList.contains('hex')) return
-    const dirs: Record<string, [number, number]> = {
-      ArrowUp: [0, -1],
-      ArrowDown: [0, 1],
-      ArrowLeft: [-1, 0],
-      ArrowRight: [1, 0],
-    }
-    const dir = dirs[e.key]
-    if (!dir) return
-    e.preventDefault()
-    const btns = [...map.querySelectorAll<HTMLButtonElement>('.hex')]
-    const r0 = target.getBoundingClientRect()
-    const x0 = r0.left + r0.width / 2
-    const y0 = r0.top + r0.height / 2
-    let best: HTMLButtonElement | null = null
-    let bestScore = Infinity
-    for (const b of btns) {
-      if (b === target) continue
-      const r = b.getBoundingClientRect()
-      const dx = r.left + r.width / 2 - x0
-      const dy = r.top + r.height / 2 - y0
-      const along = dx * dir[0] + dy * dir[1]
-      if (along <= 4) continue
-      const lateral = Math.abs(dx * dir[1] - dy * dir[0])
-      const score = along + lateral * 2.5
-      if (score < bestScore) {
-        bestScore = score
-        best = b
-      }
-    }
-    best?.focus()
-  })
+  wireArrowNav(map, '.hex')
   field.setAttribute('data-active', activeBranch)
   const totalNodes = branches.reduce((n, b) => n + b.items.length, 0)
   map.appendChild(
@@ -593,8 +560,8 @@ export function renderBody(route: RouteId): HTMLElement {
   fxStop()
   fxStop = () => undefined
   switch (route) {
-    case 'systems':
-      return renderSystems()
+    case 'projects':
+      return renderProjects()
     case 'skills':
       return renderSkills()
     case 'experience':

@@ -134,7 +134,7 @@ button { font: inherit; color: inherit; }
 
 /* Save */
 .save-inner { width: min(760px, 94vw); }
-.sys-kicker, .system-kicker {
+.sys-kicker, .project-kicker {
   font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.14em; color: var(--amber); margin: 0 0 8px;
   text-shadow: 0 0 10px rgba(245, 181, 68, 0.35);
 }
@@ -316,9 +316,9 @@ button { font: inherit; color: inherit; }
 .bullets { margin: 12px 0; padding-left: 20px; }
 .bullets li { margin-bottom: 8px; }
 .bullets li::marker { color: var(--amber); }
-.system { border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; background: var(--ink); }
-.system h3 { margin: 0; font-size: 1.5rem; }
-.system-tag { color: var(--dim); margin: 4px 0 0; }
+.project { border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; background: var(--ink); }
+.project h3 { margin: 0; font-size: 1.5rem; }
+.project-tag { color: var(--dim); margin: 4px 0 0; }
 .award { color: var(--amber); font-family: var(--font-mono); font-size: 0.8125rem; }
 
 .skills { gap: 24px; }

@@ -282,6 +282,42 @@ button { font: inherit; color: inherit; }
   width: 340px; flex: none; margin: 0; border: 0; border-left: 1px solid var(--line);
   border-radius: 0; overflow-y: auto; background: rgba(18, 16, 11, 0.94);
 }
+/* Node popup: modal detail card over the constellation */
+.node-pop-backdrop { position: absolute; inset: 0; z-index: 20; background: rgba(5, 6, 8, 0.72); }
+.node-pop {
+  position: absolute; z-index: 21; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(420px, 88%); max-height: 88%; overflow-y: auto;
+  background: rgba(14, 13, 10, 0.97); border: 1px solid var(--amber);
+  border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--glow-amber);
+}
+.node-pop-kicker { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.2em; color: var(--amber); margin: 0 0 8px; }
+.node-pop-title { font-family: var(--font-display); font-size: 1.5rem; line-height: 1.1; margin: 0 0 12px; }
+.node-pop-body p { margin: 0 0 10px; font-size: 0.9375rem; }
+.node-pop-body p:last-child { margin-bottom: 0; }
+.node-pop-sub { font-family: var(--font-mono) !important; font-size: 0.6875rem !important; letter-spacing: 0.2em; color: var(--amber) !important; }
+.node-pop-sys { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+.node-pop-sys li { display: grid; gap: 2px; border-left: 2px solid var(--amber); padding-left: 12px; }
+.node-pop-sys strong { font-size: 0.9375rem; }
+.node-pop-sys span { font-family: var(--font-mono); font-size: 0.75rem; color: var(--dim); }
+.node-pop-close {
+  margin-top: 16px; background: transparent; border: 1px solid var(--amber); color: var(--amber);
+  font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.14em;
+  padding: 8px 16px; min-height: 36px; cursor: pointer; border-radius: var(--radius);
+}
+.node-pop-close:hover { background: var(--amber-dim); }
+/* Recognition popup: fixed dialog above the scanlines, reusing the
+   node-pop type scale for kicker / title / close. */
+.honor-pop-backdrop { position: fixed; inset: 0; z-index: 550; background: rgba(5, 6, 8, 0.78); }
+.honor-pop {
+  position: fixed; z-index: 551; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(560px, 92vw); max-height: 88dvh; overflow-y: auto;
+  background: rgba(14, 13, 10, 0.97); border: 1px solid var(--amber);
+  border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--glow-amber);
+}
+.honor-pop-meta { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--dim); margin: 0; }
+.honor-pop-photos { display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 0 0; }
+.honor-pop-photos:empty { display: none; }
+.honor-pop-photos img { height: 180px; width: auto; }
 @media (max-width: 860px) {
   .page-screen.route-skills { overflow-y: auto; }
   .page-screen.route-skills .doc.skills { flex-direction: column; }

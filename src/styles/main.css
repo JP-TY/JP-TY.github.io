@@ -340,14 +340,75 @@ button { font: inherit; color: inherit; }
 .facts div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; }
 .facts dt { font-family: var(--font-mono); font-size: 0.75rem; color: var(--amber); letter-spacing: 0.1em; }
 .facts dd { margin: 0; }
+.xchg-top { display: flex; justify-content: space-between; gap: 16px; }
+.xchg-top span:last-child { font-family: var(--font-mono); font-size: 0.75rem; color: var(--dim); white-space: nowrap; }
+.xchg-sub { display: block; margin-top: 4px; color: var(--dim); }
+
+/* Profile: identity dossier — hero card, dossier grid, duty roster */
+.profile-doc { gap: 20px; }
+.id-hero {
+  position: relative; display: grid; grid-template-columns: 240px minmax(0, 1fr);
+  gap: 28px; align-items: end; overflow: hidden;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel); padding: 20px;
+}
+.id-hero::after {
+  content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 140px;
+  background: linear-gradient(270deg, rgba(245, 181, 68, 0.1), transparent);
+  pointer-events: none;
+}
+.id-hero .portrait-frame { margin: 0; max-width: none; }
+.id-kicker { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.2em; color: var(--amber); margin: 0 0 10px; }
+.id-name { font-family: var(--font-display); font-size: clamp(2.2rem, 3.4vw, 3.2rem); line-height: 1.02; margin: 0 0 8px; }
+.id-role { font-family: var(--font-mono); font-size: 0.875rem; color: var(--text); margin: 0 0 16px; }
+.mini-facts { display: flex; flex-wrap: wrap; gap: 8px 32px; margin: 0; }
+.mini-facts div { display: grid; gap: 2px; }
+.mini-facts dt { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.16em; color: var(--amber); }
+.mini-facts dd { margin: 0; font-size: 0.9375rem; }
+.profile-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.profile-grid p { margin: 0 0 14px; }
+.profile-grid > div > p:last-child { margin-bottom: 0; }
+/* Experience summary: rail with diamond stops, stat chips, deep link out */
+.ex-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding: 20px 22px; }
+.ex-kicker { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.2em; color: var(--amber); margin: 0 0 14px; }
+.ex-list { list-style: none; margin: 0; padding: 0 0 0 18px; display: grid; gap: 10px; border-left: 1px solid var(--line); }
+.ex-list li { position: relative; display: grid; gap: 6px; }
+.ex-list li::before {
+  content: ""; position: absolute; left: -22.5px; top: 6px; width: 7px; height: 7px;
+  background: var(--amber); transform: rotate(45deg);
+}
+.ex-role { margin: 0; font-size: 0.9375rem; font-weight: 600; }
+.ex-org { margin: 2px 0 0; font-family: var(--font-mono); font-size: 0.75rem; color: var(--dim); }
+.ex-more { display: inline-block; margin-top: 16px; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.14em; color: var(--amber); text-decoration: none; }
+.ex-more:hover { text-decoration: underline; }
+.id-links { display: flex; flex-wrap: wrap; gap: 12px; }
+/* Dithered social glyphs on the identity card: each icon *is* the link */
+.id-social { display: flex; gap: 12px; margin-top: 18px; }
+.soc {
+  display: inline-grid; place-items: center; width: 60px; height: 60px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: rgba(10, 12, 16, 0.6);
+}
+.soc:hover, .soc:focus-visible { border-color: var(--amber); box-shadow: var(--glow-amber); }
+.soc:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.soc svg { width: 30px; height: 30px; fill: var(--amber); transition: fill 0.15s, transform 0.2s var(--ease-out); }
+.soc:hover svg, .soc:focus-visible svg { fill: var(--amber-hot); transform: translateY(-2px); }
+.soc .in-tile { fill: var(--amber); transition: fill 0.15s; }
+.soc .in-text { fill: var(--ink); }
+.soc:hover .in-tile, .soc:focus-visible .in-tile { fill: var(--amber-hot); }
+@media (max-width: 860px) {
+  .id-hero, .profile-grid { grid-template-columns: minmax(0, 1fr); }
+  .id-hero { align-items: start; }
+  .id-hero .portrait-frame { max-width: 240px; }
+}
 
 .status-strip {
-  display: flex; gap: 24px; align-items: center; padding: 12px 24px;
-  border-top: 1px solid var(--line); font-family: var(--font-mono); font-size: 0.75rem; color: var(--dim);
+  display: flex; gap: 16px; align-items: center; padding: 5px 16px;
+  border-top: 1px solid var(--line); font-family: var(--font-mono); font-size: 0.6875rem; color: var(--dim);
   background: rgba(18, 16, 11, 0.92);
 }
-.strip-links { margin-left: auto; display: flex; gap: 16px; }
-.strip-links a { min-height: 44px; display: inline-flex; align-items: center; }
+.strip-links { margin-left: auto; display: flex; gap: 12px; }
+.strip-links a { min-height: 28px; display: inline-flex; align-items: center; }
 
 /* Content pieces */
 .chips { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; padding: 0; }

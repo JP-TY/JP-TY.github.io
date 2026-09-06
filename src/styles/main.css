@@ -615,9 +615,11 @@ button { font: inherit; color: inherit; }
 
 /* Responsive */
 @media (max-width: 720px) {
-  .page-screen { padding: 28px 16px 48px; }
-  .menu-fg { padding: 32px 20px; }
-  .menu-record { flex-wrap: wrap; gap: 12px 20px; }
+  .page-screen { padding: 28px 16px 48px; --page-pad: 16px; }
+  .side-nav { --nav-pad-x: 12px; width: clamp(240px, 30vw, 320px); padding: 18px var(--nav-pad-x); }
+  .grand-label { font-size: clamp(1.15rem, 4.4vw, 1.5rem); }
+  .grand-row { padding-right: 12px; }
+  .menu-record { gap: 8px 14px; }
   .strip-hide-sm { display: none; }
   .facts div { grid-template-columns: minmax(0, 1fr); }
   .slot-stats { flex-wrap: wrap; gap: 12px; }

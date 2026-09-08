@@ -59,13 +59,29 @@ export function startMotes(canvas: HTMLCanvasElement): () => void {
     return () => window.removeEventListener('resize', resize)
   }
 
+  // ~30fps: motes drift slow enough that 60 is wasted CPU, and the tab
+  // stops painting entirely while hidden.
+  let last = 0
   const frame = (t: number) => {
-    draw(t)
+    if (t - last > 33) {
+      last = t
+      draw(t)
+    }
     raf = requestAnimationFrame(frame)
   }
+  const onVis = () => {
+    if (document.hidden) {
+      cancelAnimationFrame(raf)
+      raf = 0
+    } else if (!raf) {
+      raf = requestAnimationFrame(frame)
+    }
+  }
+  document.addEventListener('visibilitychange', onVis)
   raf = requestAnimationFrame(frame)
   return () => {
     cancelAnimationFrame(raf)
+    document.removeEventListener('visibilitychange', onVis)
     window.removeEventListener('resize', resize)
   }
 }

@@ -82,7 +82,7 @@ export function startFavicon(): () => void {
   const start = () => {
     window.clearInterval(timer)
     tick()
-    timer = window.setInterval(tick, 140)
+    timer = window.setInterval(tick, 220)
   }
   const onVis = () => {
     if (document.hidden) window.clearInterval(timer)

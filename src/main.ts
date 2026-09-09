@@ -57,46 +57,44 @@ const dreamHover: { index: number | null } = { index: null }
 let dreamStop: () => void = () => undefined
 let menuBuilt = false
 
-function setDrawer(open: boolean, focusRow: boolean): void {
-  const screen = document.getElementById('menu-screen')
-  const drawer = document.getElementById('menu-drawer')
-  const tab = document.getElementById('menu-tab') as HTMLButtonElement | null
-  if (!screen || !drawer || !tab) return
-  screen.classList.toggle('drawer-open', open)
-  tab.setAttribute('aria-expanded', String(open))
-  if (open) {
-    drawer.removeAttribute('inert')
-    if (focusRow) document.querySelector<HTMLButtonElement>('.grand-row')?.focus({ preventScroll: true })
-  } else {
-    drawer.setAttribute('inert', '')
-  }
+/** Move the roving focus through the index rows (left/right & up/down). */
+function moveNavFocus(step: 1 | -1): void {
+  const rows = [...document.querySelectorAll<HTMLButtonElement>('.grand-row')]
+  if (rows.length === 0) return
+  const cur = rows.findIndex((r) => r.tabIndex === 0)
+  const next =
+    cur === -1
+      ? step === 1
+        ? 0
+        : rows.length - 1
+      : (cur + step + rows.length) % rows.length
+  rows.forEach((r) => (r.tabIndex = -1))
+  rows[next].tabIndex = 0
+  rows[next].focus({ preventScroll: true })
 }
 
-function wireDrawer(): void {
-  const screen = document.getElementById('menu-screen')
-  const dock = document.getElementById('menu-dock')
-  const tab = document.getElementById('menu-tab') as HTMLButtonElement | null
-  if (!screen || !dock || !tab) return
-  tab.addEventListener('click', () => {
-    const willOpen = !screen.classList.contains('drawer-open')
-    setDrawer(willOpen, willOpen)
-  })
-  tab.addEventListener('mouseenter', () => setDrawer(true, false))
-  dock.addEventListener('mouseleave', () => setDrawer(false, false))
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && screen.classList.contains('drawer-open')) {
-      setDrawer(false, false)
-      tab.focus({ preventScroll: true })
-    }
-  })
-  // Game controls, app-wide: digits quick-travel to pages (rows handle
-  // their own keys, so skip events from inside the drawer), arrows hop
-  // the lit planet across the solar system with Enter/Space to land,
-  // I toggles the index drawer while the menu is up.
+/** Step to the previous/next section from inside any page. */
+function stepSection(step: 1 | -1): void {
+  const ids = sections.map((s) => s.id as RouteId)
+  const cur = ids.indexOf(currentRoute())
+  const next = ids[(((cur < 0 ? 0 : cur) + step) % ids.length + ids.length) % ids.length]
+  blip(600, 50)
+  navigate(next)
+}
+
+function wireKeys(): void {
   document.addEventListener('keydown', (e) => {
     const app = document.getElementById('app')
     if (!app || app.hidden) return
+    if (e.ctrlKey || e.metaKey || e.altKey) return
     const target = e.target as HTMLElement | null
+    if (target?.closest?.('input, textarea, select')) return
+    // Open dialogs own the keyboard entirely.
+    if (document.querySelector('.honor-pop')) return
+    const screen = document.getElementById('menu-screen')
+    const inMenu = !!screen && !screen.hidden
+    // digits quick-travel to sections from anywhere; rows handle their
+    // own keys, so skip events from inside the menu
     if (/^[1-6]$/.test(e.key)) {
       if (target?.closest?.('.grand-menu')) return
       e.preventDefault()
@@ -104,28 +102,30 @@ function wireDrawer(): void {
       rows[Number(e.key) - 1]?.click()
       return
     }
-    const hop: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }
-    const step = hop[e.key]
-    if (step !== undefined && !screen.hidden) {
+    // [ and ] walk sections in order from any page.
+    if (e.key === '[' || e.key === ']') {
       if (target?.closest?.('.grand-menu')) return
       e.preventDefault()
-      const n = sections.length
-      dreamHover.index = ((dreamHover.index ?? -1) + step + n) % n
+      stepSection(e.key === ']' ? 1 : -1)
       return
     }
-    if ((e.key === 'Enter' || e.key === ' ') && !screen.hidden) {
+    if (!inMenu) return
+    // In the menu, arrows hop the index and Enter/Space lands the lit row.
+    const hop: Record<string, number> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }
+    const step = hop[e.key]
+    if (step !== undefined) {
+      if (target?.closest?.('.grand-menu, a[href]')) return
+      e.preventDefault()
+      moveNavFocus(step as 1 | -1)
+      return
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
       if (target?.closest?.('button, a, input, textarea')) return
       const lit = dreamHover.index !== null ? sections[dreamHover.index] : undefined
       if (lit) {
         e.preventDefault()
         navigate(lit.id as RouteId)
       }
-      return
-    }
-    if ((e.key === 'i' || e.key === 'I') && !screen.hidden) {
-      if (target?.closest?.('input, textarea')) return
-      const willOpen = !screen.classList.contains('drawer-open')
-      setDrawer(willOpen, willOpen)
     }
   })
 }

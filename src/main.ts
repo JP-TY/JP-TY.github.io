@@ -134,7 +134,6 @@ function showMenu(focusFirst: boolean): void {
   const menu = document.getElementById('menu-screen')
   const page = document.getElementById('page-screen')
   if (page) page.hidden = true
-  setDrawer(false, false)
   if (menu) {
     menu.hidden = false
     dreamStop()
@@ -153,8 +152,7 @@ function showMenu(focusFirst: boolean): void {
     animateCounts(menu)
   }
   if (focusFirst) {
-    setDrawer(false, false)
-    document.getElementById('menu-tab')?.focus({ preventScroll: true })
+    document.querySelector<HTMLButtonElement>('.grand-row')?.focus({ preventScroll: true })
   }
   document.getElementById('view-body')?.blur?.()
 }
@@ -191,13 +189,12 @@ function showApp(initial: RouteId): void {
       hover: dreamHover,
       onSelect: (r) => navigate(r),
     })
-    wireDrawer()
+    wireKeys()
     document.getElementById('page-back')?.addEventListener('click', () => {
       blip(520, 60)
       navigate('menu')
     })
   }
-  setDrawer(false, false)
   if (initial === 'menu') showMenu(false)
   else showPage(initial)
   animateCounts(document)

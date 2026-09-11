@@ -141,7 +141,8 @@ function el(html: string): HTMLElement {
 
 /** D-pad for tile clusters: arrows jump focus to the nearest tile in
  *  that direction, measured from live rects so grids and rails both work.
- *  When nothing lies that way the event is left alone, so paging and
+ *  Hidden tiles (closed case, filtered rows) never catch focus. When
+ *  nothing lies that way the event is left alone, so paging and
  *  scrolling keep working at the edges. */
 function wireArrowNav(root: HTMLElement, selector: string): void {
   const dirs: Record<string, [number, number]> = {
@@ -155,7 +156,9 @@ function wireArrowNav(root: HTMLElement, selector: string): void {
     if (!target?.matches(selector)) return
     const dir = dirs[e.key]
     if (!dir) return
-    const tiles = [...root.querySelectorAll<HTMLElement>(selector)]
+    const tiles = [...root.querySelectorAll<HTMLElement>(selector)].filter(
+      (t) => t === target || t.offsetParent !== null,
+    )
     const r0 = target.getBoundingClientRect()
     const x0 = r0.left + r0.width / 2
     const y0 = r0.top + r0.height / 2

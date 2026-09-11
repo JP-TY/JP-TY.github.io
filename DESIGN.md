@@ -174,14 +174,11 @@ Flat by default. Depth comes from tonal layering (ink over panel over hull), 1px
 ### Amber Ancestor (boot signature)
 - Scaled-up canvas black hole rendered as a boiling ASCII/dot-matrix hybrid: analytic glow field (halo, Doppler-limbed band with differential rotation and breathing tilt, shadow core, photon ring, lensed arcs, front pass) quantized through a time-jittered Bayer threshold, bright cells mutating ASCII glyphs and dim cells LED dots, plus rolling CRT band and corner telemetry. Burns behind the boot copy under a contrast shade at ~30fps. Starts on boot, stops dead on finish. Static single frame under reduced motion. Aria-hidden; never carries content.
 
-### Trophy shelf (recognition signature)
-- Awards render as tiered trophies: gold for championships and top honors, silver for runners-up, bronze for mentions, each with its own medal glyph and glow weight. A filter row (all, top honors, runners-up, mentions) narrows the shelf with instant hide; buttons carry aria-pressed. Hover lifts the trophy. Keyboard operable throughout.
-
 ### Badge case (recognition signature)
-- Certifications live in a closed case: a lid button showing the credential count toggles the badge grid with a grid-rows unfold. Badges are numbered phosphor discs with names. Lid carries aria-expanded; content hides again on close. Instant under reduced motion.
+- One beveled dark case holds everything behind a single lid (honor + credential counts): awards as OS-window photo cards (diamond pictogram tiles where no photo exists) and credentials as the unaltered original badge art on a horizontal rail that scrolls sideways when it overflows, numbered-disc sockets where art is unavailable. Dotted LED dividers label the two halves. Selecting a tile opens a focus-trapped dialog with the full-size photograph; Escape closes it and returns focus to the tile. Awards and credentials both navigate by arrow keys; lid carries aria-expanded and the tray hides again on close. Instant under reduced motion. Images ship as WebP (lossless for badge art) so the case costs a fraction of the old PNG weight.
 
 ### Scanlines (global texture)
-- Fixed full-screen repeating gradient, pointer-events none, below content chrome. The grain motes canvas and hairline grid sit beneath it, joined by a slow aurora layer: two drifting amber glow blobs on minute-long loops. A soft vignette darkens the frame edges above the ambience but below content. All decorative layers are aria-hidden.
+- Fixed full-screen repeating gradient, pointer-events none, below content chrome. The grain motes canvas (throttled to 30fps, paused while the tab is hidden) and hairline grid sit beneath it, joined by a slow aurora layer: two drifting amber glow blobs on minute-long loops. A soft vignette darkens the frame edges above the ambience but below content. All decorative layers are aria-hidden. Web fonts load non-blocking (preload + async swap) with system fallbacks.
 
 ### CRT grammar (signature details)
 - Corner brackets: amber L-ticks on the save slot and portrait frame.

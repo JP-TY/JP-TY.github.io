@@ -658,13 +658,25 @@ button { font: inherit; color: inherit; }
 /* Responsive */
 @media (max-width: 720px) {
   .page-screen { padding: 28px 16px 48px; --page-pad: 16px; }
-  .side-nav { --nav-pad-x: 12px; width: clamp(240px, 30vw, 320px); padding: 18px var(--nav-pad-x); }
+  /* Menu goes planet-only: the index column steps aside and the solar
+     system takes the full viewport; taps land directly on planets. */
+  .side-nav { display: none; }
+  .menu-shade { background: linear-gradient(180deg, rgba(10, 12, 16, 0.5) 0%, rgba(10, 12, 16, 0.12) 35%, rgba(10, 12, 16, 0.12) 65%, rgba(10, 12, 16, 0.5) 100%); }
   .grand-label { font-size: clamp(1.15rem, 4.4vw, 1.5rem); }
   .grand-row { padding-right: 12px; }
   .menu-record { gap: 8px 14px; }
   .strip-hide-sm { display: none; }
   .facts div { grid-template-columns: minmax(0, 1fr); }
   .slot-stats { flex-wrap: wrap; gap: 12px; }
+  /* Recognition awards join credentials as a sideways rail: one card
+     plus a peek of the next, swipeable by touch. */
+  .trophies {
+    display: flex; flex-wrap: nowrap; gap: 16px;
+    overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity;
+    margin: 6px 0 0; padding: 12px 4px 14px;
+    scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  }
+  .trophies .trophy { flex: 0 0 min(74vw, 300px); scroll-snap-align: start; }
   /* Touch: finger-size targets for one-handed use. */
   .page-back { min-height: 44px; }
   .sysbar-btn { min-height: 44px; min-width: 44px; }

@@ -374,7 +374,6 @@ function buildDetail(): HTMLElement {
     <div class="skill-detail rise">
       <h3>${b.label}</h3>
       ${chips(b.items)}
-      <p>${b.proof}</p>
     </div>`)
 }
 

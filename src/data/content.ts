@@ -32,7 +32,6 @@ export interface SkillBranch {
   id: string
   label: string
   items: string[]
-  proof: string
 }
 
 export interface TimelineStop {
@@ -126,25 +125,21 @@ export const branches: SkillBranch[] = [
     id: 'cloud',
     label: 'Cloud Infrastructure',
     items: ['AWS', 'Huawei Cloud', 'Docker', 'Terraform', 'GitHub Actions', 'Redis', 'PostgreSQL'],
-    proof: 'CreditPass on Huawei CCE with ELB and CDN; AWS Lambda, API Gateway, S3, and RDS in community builds.',
   },
   {
     id: 'ai',
     label: 'AI and Data',
     items: ['TensorFlow', 'PyTorch', 'SageMaker', 'RAG', 'Computer Vision', 'Supabase'],
-    proof: 'Capacity models with drift monitoring plus RAG over urban forestry and accessibility corpora.',
   },
   {
     id: 'systems',
     label: 'System Design',
     items: ['Microservices', 'REST APIs', 'Escrow Lifecycles', 'Event-Driven Flows', 'Caching', 'Container Orchestration'],
-    proof: 'CreditPass microservices behind ELB and CDN; Sabot agreement lifecycles with automated splits and verification gates.',
   },
   {
     id: 'languages',
     label: 'Languages',
     items: ['TypeScript', 'Python', 'Go', 'C#'],
-    proof: 'Production work across Next.js services, FastAPI and Django APIs, Go Fiber services, and Unity tooling.',
   },
 ]
 

@@ -21,7 +21,7 @@ let cssAll = ''
 for (const p of cssPaths) {
   const css = readFileSync(p, 'utf8')
   cssAll += css
-  for (const token of ['--ink', '--amber', '--font-display', '#scanlines', '#vignette', '#aurora', 'veil-flash', 'crt-blink', 'grand-menu', 'grand-row', 'grand-label', 'side-nav', 'menu-record', 'star-map', 'star-field', 'star-dust', 'star-const', 'hex-label', 'map-hint', 'page-screen', 'menu-screen', 'route-skills']) {
+  for (const token of ['--ink', '--amber', '--font-display', '#scanlines', '#vignette', '#aurora', 'veil-flash', 'crt-blink', 'dither-drift', 'grand-menu', 'grand-row', 'grand-label', 'side-nav', 'menu-record', 'star-map', 'star-field', 'star-dust', 'star-const', 'hex-label', 'map-hint', 'page-screen', 'menu-screen', 'route-skills']) {
     if (!css.includes(token)) fail(`${p} missing ${token}`)
   }
   for (const ban of ['#250505', 'Cinzel', 'linear-gradient(135deg, #a855f7']) {
@@ -75,7 +75,7 @@ if (!favSrc.includes('startFavicon') || !favSrc.includes('toDataURL')) fail('fav
 else pass('favicon engine present')
 if (!mainSrc.includes('startFavicon')) fail('favicon not wired into main')
 else pass('favicon wired')
-for (const token of ['moveNavFocus', 'stepSection', 'wireKeys', 'grand-row', 'side-nav']) {
+for (const token of ['moveNavFocus', 'stepSection', 'wireKeys', 'wireBodyKeys', 'SECTION_TILES', 'grand-row', 'side-nav']) {
   if (!mainSrc.includes(token) && !readFileSync('index.html', 'utf8').includes(token)) fail(`integrated index nav missing ${token}`)
 }
 if (process.exitCode !== 1) pass('integrated index nav wired')

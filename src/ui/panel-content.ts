@@ -447,6 +447,11 @@ function renderRecognition(): HTMLElement {
       o.classList.toggle('is-active', on)
       o.setAttribute('aria-pressed', on ? 'true' : 'false')
     })
+    // One current tile across the whole tray: moving here clears credentials.
+    wrap.querySelectorAll('.badges .gem').forEach((o) => {
+      o.classList.remove('is-active')
+      o.setAttribute('aria-pressed', 'false')
+    })
     return awards[Number(btn.dataset.index)]
   }
   const selectAward = (btn: HTMLButtonElement | null): void => {
@@ -473,11 +478,15 @@ function renderRecognition(): HTMLElement {
       ) as HTMLButtonElement
     btn.dataset.index = String(i)
     btn.addEventListener('click', () => selectAward(btn))
+    // Keyboard arrival moves the current-tile marker too, so the highlight
+    // always sits on the most recent tile — never stranded on the old one.
+    btn.addEventListener('focus', () => {
+      markAward(btn)
+    })
     li.appendChild(btn)
     return li
   })
   items.forEach((li) => list.appendChild(li))
-  wireArrowNav(list, '.gem')
   markAward(items[0]?.querySelector('.gem') as HTMLButtonElement | null)
   const h3Certs = el(`<h3 class="sub rise">Certifications</h3>`)
   const kase = el('<div class="case rise"></div>')
@@ -516,10 +525,15 @@ function renderRecognition(): HTMLElement {
   clip.appendChild(rail)
   clip.querySelectorAll<HTMLButtonElement>('.badges .gem').forEach((btn) => {
     btn.addEventListener('click', () => selectCert(btn))
+    btn.addEventListener('focus', () => {
+      markCert(btn)
+    })
   })
-  wireArrowNav(rail, '.gem')
   markCert(clip.querySelector('.badges .gem'))
   clip.prepend(h3Awards, list, h3Certs)
+  // One pool for the whole tray: arrows flow from the awards grid down
+  // into the credential rail and back up, like one continuous shelf.
+  wireArrowNav(clip, '.trophies .gem, .badges .gem')
   body.appendChild(clip)
   kase.append(lid, body)
   kase.appendChild(el('<div class="case-latch" aria-hidden="true"></div>'))

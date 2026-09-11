@@ -42,17 +42,24 @@ if (!portraitSrc.includes('prefers-reduced-motion')) fail('portrait missing redu
 else pass('portrait reduced-motion safe')
 if (portraitSrc.includes('BAYER')) fail('portrait still quantizes (artifact source)')
 else pass('portrait grade is smooth')
-if (!existsSync('public/profile.jpg')) fail('public/profile.jpg missing')
+if (!existsSync('public/profile.webp')) fail('public/profile.webp missing')
 else pass('profile photo present')
+if (!existsSync('public/Ty2x2.webp')) fail('public/Ty2x2.webp missing')
+else pass('monogram present')
+for (const p of ['src/assets/award-pjdsc.webp', 'src/assets/badge-saa.webp']) {
+  if (existsSync(p)) continue
+  fail(`${p} missing (image weight optimization regressed)`)
+}
+if (process.exitCode !== 1) pass('optimized artwork present')
 
 const panelSrc = readFileSync('src/ui/panel-content.ts', 'utf8')
 const menuSrc = readFileSync('src/ui/menu.ts', 'utf8')
 const dreamSrc = readFileSync('src/engine/dream.ts', 'utf8')
-for (const token of ['trophy', 'filter-btn', 'case-lid', 'badge-disc', '<h3 class="sub rise">Awards</h3>', 'star-map', 'star-node', 'lucide', 'stardust', 'constellation', 'map-hint', 'data-active']) {
+for (const token of ['trophy', 'case-lid', 'badge-disc', '<h3 class="sub rise">Awards</h3>', 'wireArrowNav', 'star-map', 'star-node', 'lucide', 'stardust', 'constellation', 'map-hint', 'data-active']) {
   if (!panelSrc.includes(token)) fail(`recognition missing ${token}`)
 }
 if (process.exitCode !== 1) pass('trophy room + badge case wired')
-for (const token of ['grand-row', 'dreamHover', 'navigate', 'move(1)', 'ArrowRight', 'dreamHover.index = (']) {
+for (const token of ['grand-row', 'dreamHover', 'navigate', 'move(1)', 'ArrowRight', 'opts.hover.index = idx']) {
   if (!menuSrc.includes(token) && !readFileSync('src/main.ts', 'utf8').includes(token)) fail(`menu flow missing ${token}`)
 }
 if (process.exitCode !== 1) pass('grand menu flow wired')
@@ -68,10 +75,14 @@ if (!favSrc.includes('startFavicon') || !favSrc.includes('toDataURL')) fail('fav
 else pass('favicon engine present')
 if (!mainSrc.includes('startFavicon')) fail('favicon not wired into main')
 else pass('favicon wired')
-for (const token of ['setDrawer', 'wireDrawer', 'inert', 'drawer-open']) {
-  if (!mainSrc.includes(token)) fail(`edge drawer missing ${token}`)
+for (const token of ['moveNavFocus', 'stepSection', 'wireKeys', 'grand-row', 'side-nav']) {
+  if (!mainSrc.includes(token) && !readFileSync('index.html', 'utf8').includes(token)) fail(`integrated index nav missing ${token}`)
 }
-if (process.exitCode !== 1) pass('edge drawer wired')
+if (process.exitCode !== 1) pass('integrated index nav wired')
+for (const token of ['setDrawer', 'wireDrawer', 'menu-drawer']) {
+  if (mainSrc.includes(token)) fail(`retired edge drawer still referenced (${token})`)
+}
+if (process.exitCode !== 1) pass('edge drawer removed')
 
 const design = readFileSync('DESIGN.md', 'utf8')
 if (!design.includes('Amber Voice')) fail('DESIGN.md drift')

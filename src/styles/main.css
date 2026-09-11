@@ -493,18 +493,30 @@ button { font: inherit; color: inherit; }
 .win-chrome i:first-child { background: var(--amber); opacity: 1; }
 .win-chrome b { font-weight: 400; color: var(--dim); white-space: nowrap; }
 .win-chrome em { margin-left: auto; font-style: normal; color: var(--amber); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.trophies .gem-win { display: block; width: 100%; height: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 0; cursor: pointer; overflow: hidden; text-align: left; transform: none; transition: border-color 0.18s, box-shadow 0.18s, background-color 0.18s; }
-.trophies .gem-win:hover { border-color: var(--amber); box-shadow: 0 0 18px rgba(245, 181, 68, 0.35); }
+.trophies .gem-win { display: block; width: 100%; height: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 0; cursor: pointer; overflow: hidden; text-align: left; transform: none; position: relative; transition: border-color 0.18s, box-shadow 0.18s, background-color 0.18s; }
+.trophies .gem-win:hover, .trophies .gem-win:focus-visible { border-color: var(--amber); outline: none; box-shadow: none; }
 .trophies .gem-win.is-active { border-color: var(--amber); background: var(--panel-2); box-shadow: 0 0 22px rgba(245, 181, 68, 0.55); }
 .trophies .gem-win .award-img { display: block; width: 100%; height: 180px; object-fit: contain; position: relative; z-index: 501; background: rgba(10, 12, 16, 0.6); transition: transform 0.25s var(--ease-out), filter 0.15s; }
-.trophies .gem-win:hover .award-img { transform: scale(1.03); filter: drop-shadow(0 0 10px rgba(245, 181, 68, 0.8)); }
+.trophies .gem-win:hover .award-img, .trophies .gem-win:focus-visible .award-img { transform: scale(1.03); filter: drop-shadow(0 0 10px rgba(245, 181, 68, 0.8)); }
 .trophies .gem-win.is-active .award-img { filter: drop-shadow(0 0 12px rgba(255, 217, 122, 0.9)); }
 .win-trio { display: flex; align-items: flex-end; justify-content: center; padding: 10px 12px; }
-.trophies .gem-win .win-trio .award-img { height: 150px; width: auto; flex: none; }
+.trophies .gem-win .win-trio .award-img { height: 150px; width: auto; flex: none; position: relative; z-index: 501; }
 .win-trio .award-img + .award-img { margin-left: -38px; }
 .win-trio .award-img:nth-child(1) { transform: rotate(-4deg); }
-.win-trio .award-img:nth-child(2) { z-index: 502; }
+.trophies .gem-win .win-trio .award-img:nth-child(2) { z-index: 502; }
 .win-trio .award-img:nth-child(3) { transform: rotate(4deg); }
+/* Fanned trio: the fan never moves and never glows per-photo, so the
+   overlap stays clean — the whole fan lifts as one instead. Each rule
+   outranks the generic tile hover, which would otherwise snap the
+   rotations off and stack a glow outline on every photo. */
+.trophies .gem-win .win-trio { transition: transform 0.25s var(--ease-out); }
+.trophies .gem-win:hover .win-trio, .trophies .gem-win:focus-visible .win-trio { transform: scale(1.03); }
+.trophies .gem-win:hover .win-trio .award-img:nth-child(1),
+.trophies .gem-win:focus-visible .win-trio .award-img:nth-child(1) { transform: rotate(-4deg); filter: none; }
+.trophies .gem-win:hover .win-trio .award-img:nth-child(2),
+.trophies .gem-win:focus-visible .win-trio .award-img:nth-child(2) { transform: none; filter: none; }
+.trophies .gem-win:hover .win-trio .award-img:nth-child(3),
+.trophies .gem-win:focus-visible .win-trio .award-img:nth-child(3) { transform: rotate(4deg); filter: none; }
 .gem-detail-photos { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
 .gem-detail-photos:empty { display: none; }
 .gem-detail-photos img { height: 120px; width: auto; position: relative; z-index: 501; }

@@ -595,7 +595,7 @@ button { font: inherit; color: inherit; }
   padding: 14px 16px; min-height: 44px;
   cursor: pointer; font-family: var(--font-mono); color: var(--text); text-align: left;
 }
-.case-lid:hover .case-title { color: var(--amber); }
+.case-lid:hover .case-title, .case-lid:focus-visible .case-title { color: var(--amber); }
 .case-lid:focus-visible { outline: 2px solid var(--amber); outline-offset: -2px; }
 .case-title { font-weight: 700; letter-spacing: 0.14em; }
 .case-count { color: var(--dim); font-size: 0.75rem; }

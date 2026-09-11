@@ -83,6 +83,16 @@ for (const token of ['setDrawer', 'wireDrawer', 'menu-drawer']) {
   if (mainSrc.includes(token)) fail(`retired edge drawer still referenced (${token})`)
 }
 if (process.exitCode !== 1) pass('edge drawer removed')
+if (!cssAll.includes('.side-nav { display: none; }')) fail('mobile planet-only menu missing')
+else pass('planet-only menu on mobile')
+if ((cssAll.match(/\.trophies\s*\{/g) || []).length < 2) fail('awards rail missing from mobile pass')
+else pass('awards rail present on mobile')
+if (!cssAll.includes('.page-screen.route-skills .star-map { min-height: 62vh; flex: none; overflow: auto; }')) fail('skills map not pannable on mobile')
+else pass('skills map pannable on mobile')
+if (!cssAll.includes('.page-screen.route-skills .star-field { width: 920px; height: 600px; }')) fail('skills field squeezed on mobile')
+else pass('skills field keeps full size on mobile')
+if (!cssAll.includes('.page-screen.route-skills .doc.skills { flex-direction: column; min-width: 0; }')) fail('skills column blows out on mobile')
+else pass('skills column contained on mobile')
 
 const design = readFileSync('DESIGN.md', 'utf8')
 if (!design.includes('Amber Voice')) fail('DESIGN.md drift')

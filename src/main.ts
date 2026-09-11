@@ -82,6 +82,34 @@ function stepSection(step: 1 | -1): void {
   navigate(next)
 }
 
+/** Tiles each page owns: arrows pressed while focus sits on the section
+ *  body itself drop straight into these, so the d-pad works with zero
+ *  tabbing first. */
+const SECTION_TILES: Partial<Record<RouteId, string>> = {
+  skills: '.hex',
+  recognition: '.trophies .gem, .badges .gem',
+}
+
+/** Arrows from the section body focus the first tile in that direction.
+ *  Tiles handle their own arrows once focused, so this never double-fires. */
+function wireBodyKeys(): void {
+  const body = document.getElementById('view-body')
+  if (!body) return
+  body.addEventListener('keydown', (e) => {
+    if (e.target !== body) return
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+      return
+    }
+    const sel = SECTION_TILES[currentRoute()]
+    if (!sel) return
+    const tiles = [...body.querySelectorAll<HTMLElement>(sel)].filter((t) => t.offsetParent !== null)
+    if (tiles.length === 0) return
+    e.preventDefault()
+    const i = e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? tiles.length - 1 : 0
+    tiles[i].focus({ preventScroll: true })
+  })
+}
+
 function wireKeys(): void {
   document.addEventListener('keydown', (e) => {
     const app = document.getElementById('app')
@@ -203,6 +231,7 @@ function showApp(initial: RouteId): void {
 function main(): void {
   startFavicon()
   startMotes(document.getElementById('motes') as HTMLCanvasElement)
+  wireBodyKeys()
 
   const toggle = document.getElementById('sound-toggle') as HTMLButtonElement | null
   toggle?.addEventListener('click', () => {

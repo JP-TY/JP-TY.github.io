@@ -320,8 +320,9 @@ button { font: inherit; color: inherit; }
 .honor-pop-photos img { height: 180px; width: auto; }
 @media (max-width: 860px) {
   .page-screen.route-skills { overflow-y: auto; }
-  .page-screen.route-skills .doc.skills { flex-direction: column; }
-  .page-screen.route-skills .star-map { min-height: 62vh; flex: none; }
+  .page-screen.route-skills .doc.skills { flex-direction: column; min-width: 0; }
+  .page-screen.route-skills .star-map { min-height: 62vh; flex: none; overflow: auto; }
+  .page-screen.route-skills .star-field { width: 920px; height: 600px; }
   .page-screen.route-skills .skill-detail { width: auto; border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
 }
 .slot { position: relative; }

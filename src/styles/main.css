@@ -186,6 +186,8 @@ button { font: inherit; color: inherit; }
   min-height: 28px; min-width: 28px; cursor: pointer; border-radius: var(--radius);
 }
 .sysbar-btn:hover { border-color: var(--amber); color: var(--amber); }
+a.sysbar-btn { display: inline-flex; align-items: center; text-decoration: none; }
+a.sysbar-btn:hover { text-shadow: none; }
 
 /* Menu: integrated index column docked left; solar system shifted right */
 .menu-screen { position: relative; min-height: 0; flex: 1; display: grid; overflow: hidden; }
@@ -397,6 +399,15 @@ button { font: inherit; color: inherit; }
 .soc .in-tile { fill: var(--amber); transition: fill 0.15s; }
 .soc .in-text { fill: var(--ink); }
 .soc:hover .in-tile, .soc:focus-visible .in-tile { fill: var(--amber-hot); }
+.id-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+.resume-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid var(--amber); color: var(--amber);
+  font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.14em;
+  padding: 8px 16px; min-height: 44px; cursor: pointer; border-radius: var(--radius);
+  text-decoration: none;
+}
+.resume-btn:hover, .resume-btn:focus-visible { background: var(--amber-dim); color: var(--amber-hot); text-shadow: none; box-shadow: var(--glow-amber); }
 @media (max-width: 860px) {
   .id-hero, .profile-grid { grid-template-columns: minmax(0, 1fr); }
   .id-hero { align-items: start; }

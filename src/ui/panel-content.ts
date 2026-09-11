@@ -209,6 +209,9 @@ function renderProfile(): HTMLElement {
             <a class="soc" href="${profile.github}" target="_blank" rel="noopener noreferrer" aria-label="James Ty on GitHub" title="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${siGithub.path}"/></svg></a>
             <a class="soc" href="${profile.linkedin}" target="_blank" rel="noopener noreferrer" aria-label="James Ty on LinkedIn" title="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="in-tile" x="3" y="3" width="18" height="18" rx="3.5"/><text class="in-text" x="12" y="16.6" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="12.5">in</text></svg></a>
           </div>
+          <div class="id-actions">
+            <a class="resume-btn" href="/resume.pdf" download="James-Ty-Resume.pdf">DOWNLOAD RESUME ↓</a>
+          </div>
         </div>
       </div>
       <div class="profile-grid">

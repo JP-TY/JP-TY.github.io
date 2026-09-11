@@ -162,6 +162,9 @@ Flat by default. Depth comes from tonal layering (ink over panel over hull), 1px
 ### Page screen
 - Full-viewport page: RETURN button plus kicker up top, display heading, intro, then the section body at a 1080px measure. Same content renderers as before, more air. Corner brackets survive only on the save slot and portrait frame.
 
+### Small screens
+- Single column under 720px with the same amber voice throughout: the index narrows but stays open over the solar system, the constellation pans inside its map at full node size, the credential rail scrolls sideways by touch, and the case lid wraps between items instead of breaking words. RETURN, dialog close, strip links, and the sound toggle all meet 44px touch targets.
+
 ### Save Slot
 - Panel card with mono metadata and amber stat numerals. Hover and focus shift border to amber with glow and raise the surface. Single slot; scales to more without layout change.
 

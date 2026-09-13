@@ -19,6 +19,11 @@ import awardCesafi from '../assets/award-cesafi.webp'
 import awardInterHigh from '../assets/award-interhigh.webp'
 import awardAPRU from '../assets/award-apru.webp'
 
+export interface ProjectLink {
+  label: string
+  href: string
+}
+
 export interface ProjectEntry {
   id: string
   name: string
@@ -26,6 +31,7 @@ export interface ProjectEntry {
   tech: string[]
   bullets: string[]
   award: string
+  links: ProjectLink[]
 }
 
 export interface SkillBranch {
@@ -70,6 +76,10 @@ export const projects: ProjectEntry[] = [
       'Designed an MLOps retraining pipeline monitoring drift via Cloud Eye and orchestrating retraining through ModelArts.',
     ],
     award: 'Huawei Developer Competition 2025, 2nd Runner Up · APRU Tech Policy Hackathon 2025, Honorable Mention',
+    links: [
+      { label: 'Website', href: 'https://creditpass.ph' },
+      { label: 'Demo Video', href: 'https://drive.google.com/file/d/1LrH2tLuHAzS4pScWeVNeZjsF3TUdcprz/view' },
+    ],
   },
   {
     id: 'sabot',
@@ -82,6 +92,11 @@ export const projects: ProjectEntry[] = [
       'Implemented oracle-based verification pipelines validating file and service deliverables before fund release.',
     ],
     award: 'Lisk Builders Challenge Round 3, Honorable Mention',
+    links: [
+      { label: 'Website', href: 'https://www.sabotchain.com' },
+      { label: 'GitHub', href: 'https://github.com/gian-gg/sabot/tree/main' },
+      { label: 'Demo Video', href: 'https://www.youtube.com/watch?v=duVOl5K5IVE' },
+    ],
   },
   {
     id: 'lakbai',
@@ -94,6 +109,10 @@ export const projects: ProjectEntry[] = [
       'Delivered an interactive GeoJSON mapping interface with 13-band color interpolation for planners and policymakers.',
     ],
     award: 'Philippines Junior Data Science Challenge 2024, Champion',
+    links: [
+      { label: 'Website', href: 'https://lakbai.maxellmilay.com' },
+      { label: 'GitHub', href: 'https://github.com/maxellmilay/lakbai/tree/main' },
+    ],
   },
   {
     id: 'greenpoint',
@@ -106,6 +125,11 @@ export const projects: ProjectEntry[] = [
       'Built an AI recommendation engine with agentic workflows and an urban-forestry RAG system proposing pocket parks and blue-green corridors.',
     ],
     award: 'UP Cebu EXPOdition 30, Project of the Year',
+    links: [
+      { label: 'Website', href: 'https://fb-green-point-vercel.app' },
+      { label: 'GitHub', href: 'https://github.com/sicefguroni/green-point' },
+      { label: 'Demo Video', href: 'https://drive.google.com/file/d/1FEg-IITL3y6om3NKA8bH-oxLCKjpDYaL/view?usp=sharing' },
+    ],
   },
   {
     id: 'wafers',
@@ -117,6 +141,11 @@ export const projects: ProjectEntry[] = [
       'Implemented deterministic defect generation with dual progression gates evaluating operational performance and decision quality.',
     ],
     award: 'Selected for development as a microcredential for a Taiwanese semiconductor company',
+    links: [
+      { label: 'Website', href: 'https://wafers-please.vercel.app' },
+      { label: 'GitHub', href: 'https://github.com/JP-TY/wafers-please' },
+      { label: 'Demo Video', href: 'https://drive.google.com/file/d/1VwArtBu0Rj50CY7WHBdI50Og3pOlW-RC/view?usp=drive_link' },
+    ],
   },
 ]
 

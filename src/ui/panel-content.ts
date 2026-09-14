@@ -461,7 +461,7 @@ function renderRecognition(): HTMLElement {
     blip(660, 50)
     const a = markAward(btn)
     if (a) {
-      openPopup('SELECTED HONOR', a.name, `${a.project ? `${a.project} · ` : ''}${a.result}`, awardPhotos[a.name] ?? [], btn)
+      openPopup('SELECTED HONOR', a.name, `${a.level.toUpperCase()} · ${a.project ? `${a.project} · ` : ''}${a.result}`, awardPhotos[a.name] ?? [], btn)
     }
   }
   const items: HTMLElement[] = awards.map((a, i) => {
@@ -471,12 +471,12 @@ function renderRecognition(): HTMLElement {
     const li = el(`<li class="trophy tier-${tier} rise${photos.length ? ' photo' : ''}" data-tier="${tier}"></li>`)
     const btn = photos.length
       ? el(
-        `<button type="button" class="gem gem-win" aria-pressed="false" aria-label="${a.name}, ${a.result}"><span class="win-chrome" aria-hidden="true"><i></i><i></i><i></i><b>A-${String(i + 1).padStart(2, '0')}</b><em>${title}</em></span>${photos.length > 1
+        `<button type="button" class="gem gem-win" aria-pressed="false" aria-label="${a.name}, ${a.level}, ${a.result}"><span class="win-chrome" aria-hidden="true"><i></i><i></i><i></i><b>A-${String(i + 1).padStart(2, '0')}</b><em>${title}</em></span>${photos.length > 1
           ? `<span class="win-trio" aria-hidden="true">${photos.map((src) => `<img class="award-img" src="${src}" alt="" loading="lazy" decoding="async">`).join('')}</span>`
           : `<img class="award-img" src="${photos[0]}" alt="" loading="lazy" decoding="async">`}</button>`,
       ) as HTMLButtonElement
       : el(
-        `<button type="button" class="gem" aria-pressed="false" aria-label="${a.name}, ${a.result}"><span class="gem-face">${iconSVG(GEM_ICONS[i % GEM_ICONS.length], 34, 'currentColor')}</span></button>`,
+        `<button type="button" class="gem" aria-pressed="false" aria-label="${a.name}, ${a.level}, ${a.result}"><span class="gem-face">${iconSVG(GEM_ICONS[i % GEM_ICONS.length], 34, 'currentColor')}</span></button>`,
       ) as HTMLButtonElement
     btn.dataset.index = String(i)
     btn.addEventListener('click', () => selectAward(btn))
@@ -489,7 +489,7 @@ function renderRecognition(): HTMLElement {
     return li
   })
   items.forEach((li) => list.appendChild(li))
-  markAward(items[0]?.querySelector('.gem') as HTMLButtonElement | null)
+  markAward(list.querySelector('.gem') as HTMLButtonElement | null)
   const h3Certs = el(`<h3 class="sub rise">Certifications</h3>`)
   const kase = el('<div class="case rise"></div>')
   const lid = el(`<button class="case-lid" type="button" aria-expanded="true"><span class="case-title">BADGE CASE</span><span class="case-count">${String(awards.length).padStart(2, '0')} HONORS · ${String(certifications.length).padStart(2, '0')} CREDENTIALS</span><span class="case-state">CLOSE ▾</span></button>`) as HTMLButtonElement

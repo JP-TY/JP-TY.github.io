@@ -467,8 +467,25 @@ a.sysbar-btn:hover { text-shadow: none; }
 .bullets li::marker { color: var(--amber); }
 .project { border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; background: var(--ink); }
 .project h3 { margin: 0; font-size: 1.5rem; }
+.project-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.project-title { min-width: 0; }
 .project-tag { color: var(--dim); margin: 4px 0 0; }
 .award { color: var(--amber); font-family: var(--font-mono); font-size: 0.8125rem; }
+.project-links { display: flex; gap: 8px; flex-shrink: 0; margin: 0; }
+.project-link {
+  width: 44px; height: 44px; display: inline-grid; place-items: center;
+  color: var(--amber); text-decoration: none;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: rgba(10, 12, 16, 0.6);
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s, color 0.15s, transform 0.2s var(--ease-out);
+}
+.project-link svg { width: 20px; height: 20px; display: block; }
+.project-link:hover, .project-link:focus-visible {
+  color: var(--amber-hot); border-color: var(--amber);
+  background: var(--amber-dim); box-shadow: var(--glow-amber);
+  outline: 2px solid var(--amber); outline-offset: 2px;
+}
+.project-link:hover svg, .project-link:focus-visible svg { transform: translateY(-1px); }
 
 .skills { gap: 24px; }
 .star-map {

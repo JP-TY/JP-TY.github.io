@@ -20,6 +20,7 @@ import {
   Cloud,
   Code,
   Crown,
+  ExternalLink,
   Flag,
   Gem,
   Globe,
@@ -34,7 +35,7 @@ import {
   Workflow,
 } from 'lucide'
 import { startConstellation, iconSVG } from '../engine/constellation'
-import { siGithub, siGmail } from 'simple-icons'
+import { siGithub, siGmail, siGoogledrive, siYoutube } from 'simple-icons'
 import sagemakerURL from '../assets/Amazon-Web-Service-Sagemaker--Streamline-Ultimate.png'
 import {
   siDocker,
@@ -238,14 +239,42 @@ function renderProfile(): HTMLElement {
   return doc
 }
 
+/** Brand marks inherit the site amber via currentColor, same as the
+ *  identity-card socials — no hardcoded white. Lucide glyphs already
+ *  stroke currentColor, so every project icon shares one color source. */
+function brandIcon(path: string): string {
+  return `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${path}"/></svg>`
+}
+
+function projectLinkIcon(href: string, label: string): string {
+  const l = label.toLowerCase()
+  if (l.includes('github')) return brandIcon(siGithub.path)
+  if (href.includes('youtu')) return brandIcon(siYoutube.path)
+  if (href.includes('drive.google')) return brandIcon(siGoogledrive.path)
+  if (l.includes('demo')) return brandIcon(siYoutube.path)
+  if (l.includes('web')) return iconSVG(Globe, 20, 'currentColor')
+  return iconSVG(ExternalLink, 20, 'currentColor')
+}
+
 function renderProjects(): HTMLElement {
   const wrap = el('<div class="doc"></div>')
   projects.forEach((s, i) => {
+    const links = (s.links ?? [])
+      .map(
+        (l) =>
+          `<a class="project-link" href="${l.href}" target="_blank" rel="noopener noreferrer" aria-label="${l.label} for ${s.name}" title="${l.label}">${projectLinkIcon(l.href, l.label)}</a>`,
+      )
+      .join('')
     wrap.appendChild(
       el(`
       <article class="project rise">
-        <p class="project-kicker">PROJECT 0${i + 1}</p>
-        <h3>${s.name}</h3>
+        <div class="project-head">
+          <div class="project-title">
+            <p class="project-kicker">PROJECT 0${i + 1}</p>
+            <h3>${s.name}</h3>
+          </div>
+          ${links ? `<div class="project-links">${links}</div>` : ''}
+        </div>
         <p class="project-tag">${s.tagline}</p>
         ${chips(s.tech)}
         <ul class="bullets">${s.bullets.map((b) => `<li>${b}</li>`).join('')}</ul>

@@ -196,15 +196,15 @@ export const timeline: TimelineStop[] = [
   },
 ]
 
-export const awards: { name: string; result: string; project?: string }[] = [
-  { name: 'Philippines Junior Data Science Challenge 2024', result: 'CHAMPION', project: 'LakbAI' },
-  { name: 'Huawei Developer Competition 2025', result: '2ND RUNNER UP', project: 'CreditPass' },
-  { name: 'UP Cebu EXPOdition 30', result: 'PROJECT OF THE YEAR', project: 'GreenPoint' },
-  { name: 'APRU Tech Policy Hackathon 2025', result: 'HONORABLE MENTION', project: 'CreditPass' },
-  { name: 'Lisk Builders Challenge Round 3', result: 'HONORABLE MENTION', project: 'Sabot' },
-  { name: '27th Philippine Statistics Quiz 2023', result: 'REGIONAL CHAMPION' },
-  { name: 'CESAFI Computer Quiz Bowl', result: 'CHAMPION HS 2023 · 2ND RU COLLEGE 2026' },
-  { name: 'UPCSG Inter-High Programming Competition', result: '1ST RUNNER UP' },
+export const awards: { name: string; result: string; project?: string; level: 'International' | 'National' | 'Local' }[] = [
+  { name: 'Huawei Developer Competition 2025', result: '2ND RUNNER UP', project: 'CreditPass', level: 'International' },
+  { name: 'Lisk Builders Challenge Round 3', result: 'HONORABLE MENTION', project: 'Sabot', level: 'International' },
+  { name: 'APRU Tech Policy Hackathon 2025', result: 'HONORABLE MENTION', project: 'CreditPass', level: 'International' },
+  { name: 'Philippines Junior Data Science Challenge 2024', result: 'CHAMPION', project: 'LakbAI', level: 'National' },
+  { name: '27th Philippine Statistics Quiz 2023', result: 'REGIONAL CHAMPION', level: 'National' },
+  { name: 'UP Cebu EXPOdition 30', result: 'PROJECT OF THE YEAR', project: 'GreenPoint', level: 'Local' },
+  { name: 'CESAFI Computer Quiz Bowl', result: 'CHAMPION HS 2023 · 2ND RU COLLEGE 2026', level: 'Local' },
+  { name: 'UPCSG Inter-High Programming Competition', result: '1ST RUNNER UP', level: 'Local' },
 ]
 
 export const certifications: string[] = [

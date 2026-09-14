@@ -51,6 +51,27 @@ function paint(route: Exclude<RouteId, 'menu'>): void {
   body.innerHTML = ''
   body.appendChild(renderBody(route))
   animateCounts(body)
+  // Linear stepper: every page names its neighbors so sections are
+  // traversable without returning to the index (the only path on touch,
+  // where the keyboard shortcuts do not exist).
+  const ids = sections.map((s) => s.id)
+  const cur = Math.max(ids.indexOf(route), 0)
+  const prev = sections[(cur - 1 + sections.length) % sections.length]
+  const next = sections[(cur + 1) % sections.length]
+  const prevBtn = document.getElementById('step-prev')
+  const nextBtn = document.getElementById('step-next')
+  const pos = document.getElementById('step-pos')
+  if (prevBtn) {
+    prevBtn.innerHTML = ''
+    prevBtn.append('◂ ', prev.label)
+    prevBtn.setAttribute('aria-label', `Previous section: ${prev.label}`)
+  }
+  if (nextBtn) {
+    nextBtn.innerHTML = ''
+    nextBtn.append(next.label, ' ▸')
+    nextBtn.setAttribute('aria-label', `Next section: ${next.label}`)
+  }
+  if (pos) pos.textContent = `SECTION ${cur + 1} OF ${sections.length}`
 }
 
 const dreamHover: { index: number | null } = { index: null }
@@ -222,6 +243,8 @@ function showApp(initial: RouteId): void {
       blip(520, 60)
       navigate('menu')
     })
+    document.getElementById('step-prev')?.addEventListener('click', () => stepSection(-1))
+    document.getElementById('step-next')?.addEventListener('click', () => stepSection(1))
   }
   if (initial === 'menu') showMenu(false)
   else showPage(initial)

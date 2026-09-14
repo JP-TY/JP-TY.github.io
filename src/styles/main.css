@@ -266,6 +266,28 @@ a.sysbar-btn:hover { text-shadow: none; }
 .page-screen.route-skills { --back-pull: clamp(20px, 4vw, 48px); }
 .page-back:hover { background: var(--amber-dim); }
 .page-kicker { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.14em; color: var(--amber); }
+/* Linear section stepper: prev/next live at the foot of every page, so
+   sections are traversable without returning to the index. On touch this
+   is the only way to move without a precise canvas tap; on desktop it
+   saves a round trip through the menu veil. */
+.page-stepper {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 32px; padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.step-btn {
+  background: rgba(10, 12, 16, 0.92); border: 1px solid var(--amber); color: var(--amber);
+  font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.12em;
+  padding: 6px 12px; min-height: 44px; cursor: pointer; border-radius: var(--radius);
+  white-space: nowrap; max-width: 44vw; overflow: hidden; text-overflow: ellipsis;
+}
+.step-btn:hover { background: var(--amber-dim); }
+.step-pos {
+  flex: 1 1 auto; min-width: 0; text-align: center;
+  overflow: hidden; text-overflow: ellipsis;
+  font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.14em; color: var(--dim);
+  white-space: nowrap;
+}
 
 /* Skills route: constellation fills its region, evidence docks beside it.
    Nothing floats over the tree, so every node stays clickable. */

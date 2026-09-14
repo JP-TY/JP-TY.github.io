@@ -572,6 +572,11 @@ a.sysbar-btn:hover { text-shadow: none; }
    shines through clear pixels and reads as sitting on top of the art. */
 .trophies .gem-win .award-img,
 .badges .gem-cwin .badge-img { background: var(--panel); }
+/* Fanned trio (PSQ): no opaque matte — each photo is rotated, so an opaque
+   box would rotate into visible seams and read as a black backdrop. The
+   trio has no dither bloom (see :has(.win-trio) below), so true transparency
+   blends straight onto the card. */
+.trophies .gem-win .win-trio .award-img { background: transparent; }
 .badges .gem.is-active .badge-disc { color: var(--ink); border-color: var(--ink); }
 .badges .gem-face > * { grid-area: 1 / 1; }
 .badges .badge-disc { width: 40px; height: 40px; font-size: 0.75rem; }

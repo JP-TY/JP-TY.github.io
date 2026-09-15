@@ -355,6 +355,13 @@ a.sysbar-btn:hover { text-shadow: none; }
   .page-screen.route-skills .star-map { min-height: 62vh; flex: none; overflow: auto; }
   .page-screen.route-skills .star-field { width: 920px; height: 600px; }
   .page-screen.route-skills .skill-detail { width: auto; border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
+  /* Mobile map readability: contained panning, legible labels over the grid. */
+  .page-screen.route-skills .star-map { overscroll-behavior: contain; touch-action: pan-x pan-y; }
+  .page-screen.route-skills .hex-label {
+    font-size: 0.6875rem; max-width: 110px;
+    background: rgba(10, 12, 16, 0.78); padding: 2px 6px; border-radius: 3px;
+  }
+  .page-screen.route-skills .map-hint { font-size: 0.6875rem; }
 }
 .slot { position: relative; }
 .portrait-frame {
@@ -508,6 +515,9 @@ a.sysbar-btn:hover { text-shadow: none; }
 .star-node { position: absolute; transform: translate(-50%, -50%); display: grid; }
 /* Transparent hit-areas: the canvas draws the hexagons, these take input. */
 .hex { border: 0; padding: 0; background: transparent; cursor: pointer; }
+/* No rectangular outline on hexes: keyboard focus is already visible via
+   the canvas hex lighting + label highlight driven by updateLit. */
+.hex:focus, .hex:focus-visible { outline: none; }
 .hex.branch { width: 64px; height: 56px; }
 .hex.item { width: 52px; height: 45px; }
 .hex-label {

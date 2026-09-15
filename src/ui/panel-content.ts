@@ -305,18 +305,40 @@ function renderSkills(): HTMLElement {
   // stretches across any viewport while the canvas maps the same space.
   const px = (x: number): string => `${((x / 920) * 100).toFixed(2)}%`
   const py = (y: number): string => `${((y / 600) * 100).toFixed(2)}%`
+  // Mobile: the fixed-size field overflows the map viewport, so center
+  // the selected branch anchor in view. No-op on desktop where nothing
+  // overflows. Instant under reduced motion.
+  function centerOn(id: string): void {
+    const anchor = field.querySelector(`.hex.branch[data-branch="${id}"]`)?.closest('.star-node') as HTMLElement | null
+    if (!anchor) return
+    if (map.scrollWidth <= map.clientWidth && map.scrollHeight <= map.clientHeight) return
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const left = anchor.offsetLeft - map.clientWidth / 2
+    const top = anchor.offsetTop - map.clientHeight / 2
+    map.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior: reduced ? 'auto' : 'smooth' })
+  }
   const select = (id: string): void => {
     activeBranch = id
     blip(600, 50)
-    field.setAttribute('data-active', id)
     const detail = wrap.querySelector('.skill-detail')
     if (detail) detail.replaceWith(buildDetail())
+    updateLit()
+    centerOn(id)
+  }
+  // Single highlight source: the preview branch (hover when present,
+  // otherwise the selected branch). Mouse and keyboard both write hover
+  // through the same handlers below, so the latest interaction wins and
+  // the map never lights two branches at once.
+  const preview = (): string => hover.branch ?? activeBranch
+  function updateLit(): void {
+    const current = preview()
+    field.setAttribute('data-active', current)
     wrap.querySelectorAll('.star-node').forEach((n) => {
       const btn = n.querySelector('.hex[data-branch]') as HTMLElement | null
-      const on = !!btn && btn.dataset.branch === activeBranch
-      btn?.classList.toggle('is-active', on)
-      btn?.setAttribute('aria-pressed', on ? 'true' : 'false')
-      n.classList.toggle('is-lit', on)
+      const selected = !!btn && btn.dataset.branch === activeBranch
+      btn?.classList.toggle('is-active', selected)
+      btn?.setAttribute('aria-pressed', selected ? 'true' : 'false')
+      n.classList.toggle('is-lit', !!btn && btn.dataset.branch === current)
     })
   }
   const wire = (btn: HTMLButtonElement | null, id: string): void => {
@@ -325,15 +347,19 @@ function renderSkills(): HTMLElement {
     })
     btn?.addEventListener('mouseenter', () => {
       hover.branch = id
+      updateLit()
     })
     btn?.addEventListener('mouseleave', () => {
       if (hover.branch === id) hover.branch = null
+      updateLit()
     })
     btn?.addEventListener('focus', () => {
       hover.branch = id
+      updateLit()
     })
     btn?.addEventListener('blur', () => {
       if (hover.branch === id) hover.branch = null
+      updateLit()
     })
   }
   branches.forEach((b) => {
@@ -381,7 +407,9 @@ function renderSkills(): HTMLElement {
       return true
     }),
     traces: ctraces,
-    isActive: (branch: string) => branch === activeBranch,
+    // Canvas follows the same single preview source as the DOM labels,
+    // so mouse hover and keyboard focus never light a second branch.
+    isActive: (branch: string) => preview() === branch,
     hover,
   }
   stops.push(startConstellation(chart, model))
@@ -389,12 +417,15 @@ function renderSkills(): HTMLElement {
   map.appendChild(field)
   // D-pad: arrows jump focus to the nearest node in that direction.
   wireArrowNav(map, '.hex')
-  field.setAttribute('data-active', activeBranch)
+  updateLit()
+  const narrow = window.matchMedia('(max-width: 860px)').matches
   const totalNodes = branches.reduce((n, b) => n + b.items.length, 0)
   map.appendChild(
-    el(`<p class="map-hint" aria-hidden="true">${totalNodes} NODES · ${branches.length} BRANCHES — SELECT A NODE</p>`),
+    el(`<p class="map-hint" aria-hidden="true">${totalNodes} NODES · ${branches.length} BRANCHES — ${narrow ? 'TAP A NODE · SWIPE TO PAN' : 'SELECT A NODE'}</p>`),
   )
   wrap.append(map, buildDetail())
+  // Mobile lands on the selected branch instead of the map's top-left void.
+  requestAnimationFrame(() => centerOn(activeBranch))
   return wrap
 }
 

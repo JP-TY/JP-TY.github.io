@@ -199,9 +199,11 @@ a.sysbar-btn:hover { text-shadow: none; }
 /* Menu: integrated index column docked left; solar system shifted right */
 .menu-screen { position: relative; min-height: 0; flex: 1; display: grid; overflow: hidden; }
 #dream { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: manipulation; }
+/* No shade overlay: only the overall page background stays. Any extra
+   gradient layer read as a backdrop box on phones. */
 .menu-shade {
   position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(90deg, rgba(10, 12, 16, 0.82) 0%, rgba(10, 12, 16, 0.55) 45%, rgba(10, 12, 16, 0.25) 100%);
+  background: transparent;
 }
 .side-nav {
   position: relative; z-index: 8; align-self: stretch;
@@ -757,7 +759,7 @@ a.sysbar-btn:hover { text-shadow: none; }
   /* Full-size scrollable system: the canvas runs at a fixed world size
      so planets stay big; users pan to explore. */
   .menu-screen { display: block; overflow: auto; overscroll-behavior: contain; }
-  .menu-shade { background: linear-gradient(180deg, rgba(10, 12, 16, 0.5) 0%, rgba(10, 12, 16, 0.12) 35%, rgba(10, 12, 16, 0.12) 65%, rgba(10, 12, 16, 0.5) 100%); }
+  .menu-shade { background: transparent; }
   .grand-label { font-size: clamp(1.15rem, 4.4vw, 1.5rem); }
   .grand-row { padding-right: 12px; }
   .menu-record { gap: 8px 14px; }

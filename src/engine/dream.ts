@@ -170,19 +170,9 @@ export function startDream(
     const rot = ts * 0.05
     centers = []
 
-    // breathing nebulae
-    const neb = 0.85 + 0.15 * Math.sin(ts * 0.4)
-    const nebulae: [number, number, number][] = [
-      [cx - maxR * 0.7, cy - maxR * 0.5, maxR * 1.5],
-      [cx + maxR * 0.6, cy + maxR * 0.55, maxR * 1.3],
-    ]
-    for (const [nx, ny, nr] of nebulae) {
-      const g = ctx.createRadialGradient(nx, ny, 0, nx, ny, nr)
-      g.addColorStop(0, `rgba(255, 143, 18, ${(0.06 * neb).toFixed(3)})`)
-      g.addColorStop(1, 'rgba(255, 143, 18, 0)')
-      ctx.fillStyle = g
-      ctx.fillRect(nx - nr, ny - nr, nr * 2, nr * 2)
-    }
+    // No nebula washes: every background glow except the page itself was
+    // reading as smudged boxes on phones, so the backdrop stays flat and
+    // only discrete dot chrome (stars, arms, bodies) paints.
 
     // deep starfield
     for (let i = 0; i < STARS; i += 1) {
@@ -244,24 +234,14 @@ export function startDream(
       }
     }
 
-    // the sun: a soft breath, not a flood. The wide core wash used to
-    // stack with every planet halo into a giant smudge with a visible
-    // fillRect edge, so it stays tight and dim.
-    const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR * 0.34)
-    core.addColorStop(0, `rgba(255, 205, 120, ${(0.3 + 0.06 * Math.sin(ts * 1.1)).toFixed(3)})`)
-    core.addColorStop(1, 'rgba(255, 143, 18, 0)')
-    ctx.fillStyle = core
-    ctx.fillRect(cx - maxR * 0.34, cy - maxR * 0.34, maxR * 0.68, maxR * 0.68)
-
+    // No background washes at all: no wide core glow, no halo flood.
+    // Every fillRect wash stacked into smudges with visible edges on
+    // phones, so the sun reads from discrete dot chrome alone —
+    // granulation disc, corona rings, flare arcs, and tick ring.
     // the sun: a proper dithered star. Boiling granulation disc with
     // dark sunspot umbrae, bright limb, hugging corona rings, rotating
-    // flare arcs, a slow instrument tick ring, and a deep halo.
+    // flare arcs, and a slow instrument tick ring.
     const sunR = maxR * 0.12
-    const sunHalo = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunR * 2.8)
-    sunHalo.addColorStop(0, `rgba(255, 190, 90, ${(0.2 + 0.05 * Math.sin(ts * 1.3)).toFixed(3)})`)
-    sunHalo.addColorStop(1, 'rgba(255, 143, 18, 0)')
-    ctx.fillStyle = sunHalo
-    ctx.fillRect(cx - sunR * 2.8, cy - sunR * 2.8, sunR * 5.6, sunR * 5.6)
     {
       const rad = Math.ceil(sunR) + 1
       const spots: [number, number, number][] = [
@@ -422,18 +402,14 @@ export function startDream(
       }
       if (!onScreen) continue
 
-      // presence: soft glow halo + dotted halo ring so planets read as
-      // foreground bodies, never background dust
-      const haloR = R * (live ? 2.6 : 1.9)
-      const hg = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, haloR)
-      hg.addColorStop(0, `rgba(255, 176, 66, ${(live ? 0.5 : dimmed ? 0.1 : 0.18).toFixed(3)})`)
-      hg.addColorStop(1, 'rgba(255, 143, 18, 0)')
-      ctx.fillStyle = hg
-      ctx.fillRect(pos.x - haloR, pos.y - haloR, haloR * 2, haloR * 2)
+      // presence: dotted halo ring only — the old radial wash flooded
+      // into neighboring planets and read as background boxes, so only
+      // discrete dots paint, never a filled glow.
+      const haloR = R * 1.5
       for (let s = 0; s <= 44; s += 1) {
         const a = (s / 44) * Math.PI * 2
         if (hash(s, i * 311 + 11) < 0.35) continue
-        dot(pos.x + Math.cos(a) * R * 1.5, pos.y + Math.sin(a) * R * 1.5, live ? 2.4 : 1.8, live, live ? 0.9 : 0.5)
+        dot(pos.x + Math.cos(a) * haloR, pos.y + Math.sin(a) * haloR, live ? 2.4 : 1.8, live, live ? 0.9 : 0.5)
       }
 
       // sun-ward light for crescent phases

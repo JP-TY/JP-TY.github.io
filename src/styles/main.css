@@ -309,7 +309,7 @@ a.sysbar-btn:hover { text-shadow: none; }
 .page-screen.route-skills .view-intro { margin: 0; }
 .page-screen.route-skills #view-body { flex: 1; min-height: 0; display: flex; }
 .page-screen.route-skills .doc.skills { flex: 1; min-height: 0; display: flex; flex-direction: row; gap: 0; }
-.page-screen.route-skills .star-map { position: relative; flex: 1; min-width: 0; min-height: 0; max-height: none; overflow: hidden; border: 0; border-radius: 0; }
+.page-screen.route-skills .star-map { position: relative; flex: 1; min-width: 0; min-height: 0; max-height: none; overflow: auto; border: 0; border-radius: 0; }
 .page-screen.route-skills .star-field { width: 100%; height: 100%; }
 .page-screen.route-skills .skill-detail {
   width: 340px; flex: none; margin: 0; border: 0; border-left: 1px solid var(--line);
@@ -354,20 +354,18 @@ a.sysbar-btn:hover { text-shadow: none; }
 @media (max-width: 860px) {
   .page-screen.route-skills { overflow-y: auto; }
   .page-screen.route-skills .doc.skills { flex-direction: column; min-width: 0; }
-  .page-screen.route-skills .star-map { min-height: 62vh; flex: none; overflow: auto; }
+  .page-screen.route-skills .star-map { min-height: 62vh; flex: none; overflow: hidden; }
   .page-screen.route-skills .star-field { width: 1440px; height: 900px; }
   .page-screen.route-skills .skill-detail { width: auto; border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
-  /* Mobile map readability: contained panning, legible labels over the grid.
-     Labels stay transparent with a text shadow — no opaque box — so a label
-     never reads as a black backdrop sitting on top of a neighboring planet. */
-  .page-screen.route-skills .star-map { overscroll-behavior: contain; touch-action: pan-x pan-y; }
+  /* Mobile map readability: legible labels over the grid. Labels stay
+     transparent with a text shadow — no opaque box — so a label never
+     reads as a black backdrop sitting on top of a neighboring planet. */
   .page-screen.route-skills .hex-label {
     font-size: calc(0.6875rem * var(--z)); max-width: calc(110px * var(--z));
     background: transparent; border: 0; box-shadow: none; padding: 0; border-radius: 0;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.9);
     pointer-events: none;
   }
-  .page-screen.route-skills .map-hint { font-size: 0.6875rem; }
 }
 @media (max-width: 480px) {
   /* Smaller phones: a step-down map world. DOM nodes ride percentages and
@@ -508,7 +506,8 @@ a.sysbar-btn:hover { text-shadow: none; }
 .skills { gap: 24px; }
 .star-map {
   border: 1px solid var(--line); border-radius: var(--radius);
-  overflow: auto; max-height: min(62vh, 560px);
+  overflow: hidden; max-height: min(62vh, 560px);
+  position: relative;
   /* Game viewport: pan/zoom inside, no chrome scrollbars anywhere. */
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -535,7 +534,16 @@ a.sysbar-btn:hover { text-shadow: none; }
   background-size: auto, auto, 100% 28px, 28px 100%;
 }
 .star-map::-webkit-scrollbar,
+.star-scroller::-webkit-scrollbar,
 .menu-screen::-webkit-scrollbar { display: none; }
+/* Inner scroller owns every scroll offset on every viewport; JS pans it
+   via pointer drag and zooms by growing the field inside it. */
+.star-scroller {
+  position: absolute; inset: 0; overflow: auto;
+  touch-action: none; overscroll-behavior: contain; cursor: grab;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.star-scroller:active { cursor: grabbing; }
 .star-dust { position: absolute; inset: 0; width: 100%; height: 100%; }
 .star-const { position: absolute; inset: 0; width: 100%; height: 100%; }
 .star-node { position: absolute; transform: translate(-50%, -50%); display: grid; background: transparent; }
@@ -556,10 +564,23 @@ a.sysbar-btn:hover { text-shadow: none; }
 .star-node.is-lit > .hex-label { color: var(--amber); }
 .star-field[data-active] .star-node:not(.is-lit) > .hex-label { opacity: 0.3; }
 .star-node > .hex-label { transition: opacity 0.2s var(--ease-out); }
-.map-hint {
-  position: absolute; top: 12px; left: 16px; z-index: 4; margin: 0;
-  font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.14em;
-  color: var(--dim); pointer-events: none;
+.map-zoom {
+  position: absolute; top: 12px; right: 12px; z-index: 5;
+  display: flex; align-items: center; gap: 6px;
+  pointer-events: none;
+}
+.map-zoom-btn, .map-zoom-level { pointer-events: auto; }
+.map-zoom-btn {
+  min-width: 44px; min-height: 44px; padding: 0 12px;
+  background: rgba(14, 13, 10, 0.92); border: 1px solid var(--line);
+  color: var(--amber); font-family: var(--font-mono); font-size: 1rem;
+  border-radius: var(--radius); cursor: pointer;
+}
+.map-zoom-btn:hover, .map-zoom-btn:focus-visible { border-color: var(--amber); outline: 2px solid var(--amber); outline-offset: 2px; }
+.map-zoom-reset { font-size: 0.6875rem; letter-spacing: 0.14em; }
+.map-zoom-level {
+  font-family: var(--font-mono); font-size: 0.6875rem; color: var(--dim);
+  min-width: 48px; text-align: center; pointer-events: none;
 }
 .skill-detail { border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; background: var(--ink); }
 .skill-detail h3 { margin: 0; }

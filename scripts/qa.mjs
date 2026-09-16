@@ -21,7 +21,7 @@ let cssAll = ''
 for (const p of cssPaths) {
   const css = readFileSync(p, 'utf8')
   cssAll += css
-  for (const token of ['--ink', '--amber', '--font-display', '#scanlines', '#vignette', '#aurora', 'veil-flash', 'crt-blink', 'dither-drift', 'grand-menu', 'grand-row', 'grand-label', 'side-nav', 'menu-record', 'star-map', 'star-field', 'star-dust', 'star-const', 'hex-label', 'map-hint', 'page-screen', 'menu-screen', 'route-skills']) {
+  for (const token of ['--ink', '--amber', '--font-display', '#scanlines', '#vignette', '#aurora', 'veil-flash', 'crt-blink', 'dither-drift', 'grand-menu', 'grand-row', 'grand-label', 'side-nav', 'menu-record', 'star-map', 'star-scroller', 'star-field', 'star-dust', 'star-const', 'hex-label', 'map-zoom', 'page-screen', 'menu-screen', 'route-skills']) {
     if (!css.includes(token)) fail(`${p} missing ${token}`)
   }
   for (const ban of ['#250505', 'Cinzel', 'linear-gradient(135deg, #a855f7']) {
@@ -55,7 +55,7 @@ if (process.exitCode !== 1) pass('optimized artwork present')
 const panelSrc = readFileSync('src/ui/panel-content.ts', 'utf8')
 const menuSrc = readFileSync('src/ui/menu.ts', 'utf8')
 const dreamSrc = readFileSync('src/engine/dream.ts', 'utf8')
-for (const token of ['trophy', 'case-lid', 'badge-disc', '<h3 class="sub rise">Awards</h3>', 'wireArrowNav', 'star-map', 'star-node', 'lucide', 'stardust', 'constellation', 'map-hint', 'data-active']) {
+for (const token of ['trophy', 'case-lid', 'badge-disc', '<h3 class="sub rise">Awards</h3>', 'wireArrowNav', 'star-map', 'star-scroller', 'star-node', 'lucide', 'stardust', 'constellation', 'map-zoom', 'data-active']) {
   if (!panelSrc.includes(token)) fail(`recognition missing ${token}`)
 }
 if (process.exitCode !== 1) pass('trophy room + badge case wired')
@@ -87,7 +87,7 @@ if (!cssAll.includes('.side-nav { display: none; }')) fail('mobile planet-only m
 else pass('planet-only menu on mobile')
 if ((cssAll.match(/\.trophies\s*\{/g) || []).length < 2) fail('awards rail missing from mobile pass')
 else pass('awards rail present on mobile')
-if (!cssAll.includes('.page-screen.route-skills .star-map { min-height: 62vh; flex: none; overflow: auto; }')) fail('skills map not pannable on mobile')
+if (!cssAll.includes('.page-screen.route-skills .star-map { min-height: 62vh; flex: none; overflow: hidden; }')) fail('skills map not pannable on mobile')
 else pass('skills map pannable on mobile')
 if (!cssAll.includes('.page-screen.route-skills .star-field { width: 1440px; height: 900px; }')) fail('skills field squeezed on mobile')
 else pass('skills field keeps full size on mobile')

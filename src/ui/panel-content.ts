@@ -295,6 +295,9 @@ let fxStop: () => void = () => undefined
 function renderSkills(): HTMLElement {
   const wrap = el('<div class="doc skills"></div>')
   const map = el('<div class="star-map rise" role="group" aria-label="Skill constellation"></div>')
+  // Inner scroller owns every scroll offset; the zoom buttons overlay the
+  // map chrome as siblings so they never scroll away or steal pan gestures.
+  const scroller = el('<div class="star-scroller"></div>')
   const field = el('<div class="star-field"></div>')
   const dust = el('<canvas class="star-dust" aria-hidden="true"></canvas>') as HTMLCanvasElement
   field.appendChild(dust)
@@ -308,25 +311,29 @@ function renderSkills(): HTMLElement {
   // stretches across any viewport while the canvas maps the same space.
   const px = (x: number): string => `${((x / 1440) * 100).toFixed(2)}%`
   const py = (y: number): string => `${((y / 900) * 100).toFixed(2)}%`
-  // Mobile: the fixed-size field overflows the map viewport, so center
-  // the selected branch anchor in view. No-op on desktop where nothing
-  // overflows. Instant under reduced motion.
+  // Center the selected branch anchor in view whenever the field
+  // overflows its viewport (mobile always, desktop once zoomed in).
+  // Instant under reduced motion or on first mount.
   function centerOn(id: string, instant = false): void {
     const anchor = field.querySelector(`.hex.branch[data-branch="${id}"]`)?.closest('.star-node') as HTMLElement | null
     if (!anchor) return
-    if (map.scrollWidth <= map.clientWidth && map.scrollHeight <= map.clientHeight) return
+    if (scroller.scrollWidth <= scroller.clientWidth + 1 && scroller.scrollHeight <= scroller.clientHeight + 1) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const left = anchor.offsetLeft - map.clientWidth / 2
-    const top = anchor.offsetTop - map.clientHeight / 2
-    map.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior: reduced || instant ? 'auto' : 'smooth' })
+    const left = anchor.offsetLeft - scroller.clientWidth / 2
+    const top = anchor.offsetTop - scroller.clientHeight / 2
+    scroller.scrollTo({
+      left: Math.max(0, Math.min(left, scroller.scrollWidth - scroller.clientWidth)),
+      top: Math.max(0, Math.min(top, scroller.scrollHeight - scroller.clientHeight)),
+      behavior: reduced || instant ? 'auto' : 'smooth',
+    })
   }
-  // Zoom camera: pinch / ctrl-wheel / double-tap scale the field's
-  // explicit size while native scroll pans. The canvas refits through a
+  // Zoom camera: wheel / pinch / double-tap / buttons scale the field's
+  // explicit size while scroll offsets pan. The canvas refits through a
   // ResizeObserver and multiplies geometry by view.scale; DOM hit-areas
   // scale through the --z custom property, so both layers always agree.
   const view = { scale: 1 }
-  const ZMIN = 0.7
-  const ZMAX = 2.5
+  const ZMIN = 0.6
+  const ZMAX = 3
   let baseW = 0
   let baseH = 0
   let baseDirty = true
@@ -334,62 +341,78 @@ function renderSkills(): HTMLElement {
     if (!baseDirty) return
     field.style.width = ''
     field.style.height = ''
-    baseW = field.clientWidth || 1440
-    baseH = field.clientHeight || 900
+    baseW = field.clientWidth || scroller.clientWidth || 1440
+    baseH = field.clientHeight || scroller.clientHeight || 900
     baseDirty = false
     if (view.scale !== 1) {
       field.style.width = `${Math.round(baseW * view.scale)}px`
       field.style.height = `${Math.round(baseH * view.scale)}px`
     }
   }
+  const syncZoomUI = (): void => {
+    field.style.setProperty('--z', String(view.scale))
+    map.dataset.zoom = view.scale.toFixed(2)
+    const label = map.querySelector('.map-zoom-level')
+    if (label) label.textContent = `${Math.round(view.scale * 100)}%`
+  }
   const applyZoomAt = (nz: number, fx?: number, fy?: number): void => {
     ensureBase()
     const old = view.scale
     const clamped = Math.min(ZMAX, Math.max(ZMIN, nz))
     if (clamped === old) return
-    // pin the focal point (map-relative px) across the scale change
-    const rect = map.getBoundingClientRect()
+    // pin the focal point (viewport-relative px) across the scale change
+    const rect = scroller.getBoundingClientRect()
     const px = fx ?? rect.width / 2
     const py = fy ?? rect.height / 2
-    const cxp = map.scrollLeft + px
-    const cyp = map.scrollTop + py
+    const cxp = scroller.scrollLeft + px
+    const cyp = scroller.scrollTop + py
     view.scale = clamped
     field.style.width = `${Math.round(baseW * clamped)}px`
     field.style.height = `${Math.round(baseH * clamped)}px`
-    field.style.setProperty('--z', String(clamped))
+    syncZoomUI()
     const k = clamped / old
-    map.scrollLeft = cxp * k - px
-    map.scrollTop = cyp * k - py
+    scroller.scrollLeft = cxp * k - px
+    scroller.scrollTop = cyp * k - py
   }
   const markBaseDirty = (): void => {
+    // While zoomed, keep the original base so resize never jumps the
+    // camera; it is re-measured once the user returns to 100%.
+    if (view.scale !== 1) return
     baseDirty = true
   }
   const zpts = new Map<number, { x: number; y: number }>()
   let zDown: { x: number; y: number } | null = null
   let zDragged = false
-  let zPinch0: { dist: number } | null = null
+  let zPinch0 = 0
   let zScale0 = 1
   let zLastTap = 0
-  const zPos = (e: PointerEvent): { x: number; y: number } => {
-    const r = map.getBoundingClientRect()
+  let zCaptured = false
+  const zPos = (e: PointerEvent | MouseEvent | WheelEvent): { x: number; y: number } => {
+    const r = scroller.getBoundingClientRect()
     return { x: e.clientX - r.left, y: e.clientY - r.top }
+  }
+  const releaseCapture = (e: PointerEvent): void => {
+    if (!zCaptured) return
+    zCaptured = false
+    try {
+      if (scroller.hasPointerCapture(e.pointerId)) scroller.releasePointerCapture(e.pointerId)
+    } catch {
+      /* ignore — capture already gone */
+    }
   }
   const zDownHandler = (e: PointerEvent): void => {
     ensureBase()
-    try {
-      field.setPointerCapture(e.pointerId)
-    } catch {
-      /* older browsers: gestures still work without capture */
-    }
     zpts.set(e.pointerId, zPos(e))
     if (zpts.size === 1) {
       zDown = zPos(e)
       zDragged = false
     } else if (zpts.size === 2) {
       const [a, b] = [...zpts.values()]
-      zPinch0 = { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1 }
+      zPinch0 = Math.hypot(a.x - b.x, a.y - b.y) || 1
       zScale0 = view.scale
+      // A second finger always means gesture: never let it click through.
       zDragged = true
+      zDown = null
     }
   }
   const zMoveHandler = (e: PointerEvent): void => {
@@ -398,21 +421,32 @@ function renderSkills(): HTMLElement {
     const cur = zPos(e)
     zpts.set(e.pointerId, cur)
     if (zpts.size === 1) {
-      if (zDown && Math.hypot(cur.x - zDown.x, cur.y - zDown.y) > 8) zDragged = true
-      if (zDragged) {
-        map.scrollLeft -= cur.x - prev.x
-        map.scrollTop -= cur.y - prev.y
+      if (!zDragged && zDown && Math.hypot(cur.x - zDown.x, cur.y - zDown.y) > 6) {
+        zDragged = true
+        // Take over the gesture only once it is a real drag, so simple
+        // taps still reach the node buttons as clicks.
+        try {
+          scroller.setPointerCapture(e.pointerId)
+          zCaptured = true
+        } catch {
+          /* older browsers: gestures still work without capture */
+        }
       }
-    } else if (zpts.size === 2 && zPinch0) {
+      if (zDragged) {
+        scroller.scrollLeft -= cur.x - prev.x
+        scroller.scrollTop -= cur.y - prev.y
+      }
+    } else if (zpts.size === 2 && zPinch0 > 0) {
       const [a, b] = [...zpts.values()]
       const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1
       const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
-      applyZoomAt((zScale0 * dist) / zPinch0.dist, mid.x, mid.y)
+      applyZoomAt((zScale0 * dist) / zPinch0, mid.x, mid.y)
     }
   }
   const zUpHandler = (e: PointerEvent): void => {
     zpts.delete(e.pointerId)
-    if (zpts.size < 2) zPinch0 = null
+    releaseCapture(e)
+    if (zpts.size < 2) zPinch0 = 0
     if (zpts.size === 0) {
       const now = performance.now()
       if (e.pointerType !== 'mouse' && !zDragged && now - zLastTap < 320) {
@@ -425,10 +459,15 @@ function renderSkills(): HTMLElement {
         zLastTap = now
       }
       zDown = null
+    } else if (zpts.size === 1) {
+      // Dropping from pinch back to one finger restarts the drag origin
+      // so the remaining finger never jumps the map.
+      const [rest] = [...zpts.values()]
+      zDown = { ...rest }
     }
   }
-  // Capture phase: a drag or double-tap zoom must never leak a click
-  // into the node buttons below. Untouched taps pass through untouched.
+  // Capture phase: a drag, pinch, or double-tap zoom must never leak a
+  // click into the node buttons below. Untouched taps pass through untouched.
   const zClickCapture = (e: MouseEvent): void => {
     if (zDragged) {
       e.stopPropagation()
@@ -437,16 +476,32 @@ function renderSkills(): HTMLElement {
     }
   }
   const zWheel = (e: WheelEvent): void => {
-    // Trackpad pinch (ctrl+wheel) zooms at the cursor; plain wheel keeps
-    // its native scroll so the map stays traversable without zooming.
-    if (!e.ctrlKey) return
+    // Wheel over the map zooms at the cursor (trackpad pinch arrives as
+    // ctrl+wheel and takes the same path). The page behind the map never
+    // scrolls while the pointer is over the constellation.
     e.preventDefault()
-    const p = zPos(e as unknown as PointerEvent)
-    applyZoomAt(view.scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15), p.x, p.y)
+    const p = zPos(e)
+    const norm = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY
+    const factor = Math.exp(-norm / 320)
+    applyZoomAt(view.scale * factor, p.x, p.y)
   }
   const zDblClick = (e: MouseEvent): void => {
-    const p = zPos(e as unknown as PointerEvent)
+    const p = zPos(e)
     applyZoomAt(view.scale > 1.4 ? 1 : 1.8, p.x, p.y)
+  }
+  const zKey = (e: KeyboardEvent): void => {
+    const target = e.target as HTMLElement | null
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault()
+      applyZoomAt(view.scale * 1.2)
+    } else if (e.key === '-' || e.key === '_') {
+      e.preventDefault()
+      applyZoomAt(view.scale / 1.2)
+    } else if (e.key === '0') {
+      e.preventDefault()
+      applyZoomAt(1)
+    }
   }
   const select = (id: string): void => {
     activeBranch = id
@@ -545,39 +600,61 @@ function renderSkills(): HTMLElement {
     view,
   }
   stops.push(startConstellation(chart, model))
-  // Zoom gestures own the field: drag pans, pinch / ctrl-wheel / double
-  // tap zooms. touch-action:none (CSS) keeps the browser from stealing
-  // the gesture; taps still click through to the node buttons.
-  field.addEventListener('pointerdown', zDownHandler)
-  field.addEventListener('pointermove', zMoveHandler)
-  field.addEventListener('pointerup', zUpHandler)
-  field.addEventListener('pointercancel', zUpHandler)
-  field.addEventListener('click', zClickCapture, true)
-  field.addEventListener('dblclick', zDblClick)
-  map.addEventListener('wheel', zWheel, { passive: false })
+  // Pan/zoom gestures own the scroller so drags starting on empty space
+  // pan too. Capture is taken only after a real drag starts, so taps still
+  // reach the node buttons as clicks on desktop + mobile. Wheel always
+  // zooms at the cursor; pinch / double-tap zoom as well.
+  scroller.addEventListener('pointerdown', zDownHandler)
+  scroller.addEventListener('pointermove', zMoveHandler)
+  scroller.addEventListener('pointerup', zUpHandler)
+  scroller.addEventListener('pointercancel', zUpHandler)
+  scroller.addEventListener('click', zClickCapture, true)
+  scroller.addEventListener('dblclick', zDblClick)
+  scroller.addEventListener('wheel', zWheel, { passive: false })
+  map.addEventListener('keydown', zKey)
   window.addEventListener('resize', markBaseDirty)
   stops.push(() => {
-    field.removeEventListener('pointerdown', zDownHandler)
-    field.removeEventListener('pointermove', zMoveHandler)
-    field.removeEventListener('pointerup', zUpHandler)
-    field.removeEventListener('pointercancel', zUpHandler)
-    field.removeEventListener('click', zClickCapture, true)
-    field.removeEventListener('dblclick', zDblClick)
-    map.removeEventListener('wheel', zWheel)
+    scroller.removeEventListener('pointerdown', zDownHandler)
+    scroller.removeEventListener('pointermove', zMoveHandler)
+    scroller.removeEventListener('pointerup', zUpHandler)
+    scroller.removeEventListener('pointercancel', zUpHandler)
+    scroller.removeEventListener('click', zClickCapture, true)
+    scroller.removeEventListener('dblclick', zDblClick)
+    scroller.removeEventListener('wheel', zWheel)
+    map.removeEventListener('keydown', zKey)
     window.removeEventListener('resize', markBaseDirty)
   })
   fxStop = () => stops.forEach((s) => s())
-  map.appendChild(field)
+  scroller.appendChild(field)
+  map.append(scroller)
+  // Zoom controls: explicit buttons for mouse + touch (wheel/pinch work too).
+  const zoomUI = el(
+    `<div class="map-zoom" role="group" aria-label="Map zoom">
+      <button type="button" class="map-zoom-btn" data-zoom="out" aria-label="Zoom out">−</button>
+      <span class="map-zoom-level" aria-hidden="true">100%</span>
+      <button type="button" class="map-zoom-btn" data-zoom="in" aria-label="Zoom in">+</button>
+      <button type="button" class="map-zoom-btn map-zoom-reset" data-zoom="reset" aria-label="Reset zoom">RESET</button>
+    </div>`,
+  )
+  zoomUI.querySelector('[data-zoom="in"]')?.addEventListener('click', () => applyZoomAt(view.scale * 1.25))
+  zoomUI.querySelector('[data-zoom="out"]')?.addEventListener('click', () => applyZoomAt(view.scale / 1.25))
+  zoomUI.querySelector('[data-zoom="reset"]')?.addEventListener('click', () => {
+    view.scale = 1
+    baseDirty = true
+    field.style.width = ''
+    field.style.height = ''
+    ensureBase()
+    syncZoomUI()
+    centerOn(activeBranch)
+  })
+  // Overlay sibling: never scrolls away, never sits in the pan flow.
+  map.appendChild(zoomUI)
+  syncZoomUI()
   // D-pad: arrows jump focus to the nearest node in that direction.
   wireArrowNav(map, '.hex')
   updateLit()
-  const narrow = window.matchMedia('(max-width: 860px)').matches
-  const totalNodes = branches.reduce((n, b) => n + b.items.length, 0)
-  map.appendChild(
-    el(`<p class="map-hint" aria-hidden="true">${totalNodes} NODES · ${branches.length} BRANCHES — ${narrow ? 'TAP A NODE' : 'SELECT A NODE'} · DRAG TO PAN · PINCH TO ZOOM</p>`),
-  )
   wrap.append(map, buildDetail())
-  // Mobile lands on the selected branch instead of the map's top-left void.
+  // Land on the selected branch instead of the map's top-left void.
   // Instant: the smooth glide read as the map being slow to settle.
   requestAnimationFrame(() => centerOn(activeBranch, true))
   return wrap

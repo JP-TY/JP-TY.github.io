@@ -17,8 +17,8 @@ const BAYER = [
 // Model space: hand-spaced layout coordinates. The canvas maps these onto
 // whatever the container measures; node sizes stay in device pixels so the
 // drawn hexes always match their DOM hit-areas exactly.
-const MW = 1240
-const MH = 800
+const MW = 1440
+const MH = 900
 
 function hash(x: number, y: number): number {
   let h = (x * 374761393 + y * 668265263) | 0

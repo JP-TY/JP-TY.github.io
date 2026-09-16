@@ -353,7 +353,7 @@ a.sysbar-btn:hover { text-shadow: none; }
   .page-screen.route-skills { overflow-y: auto; }
   .page-screen.route-skills .doc.skills { flex-direction: column; min-width: 0; }
   .page-screen.route-skills .star-map { min-height: 62vh; flex: none; overflow: auto; }
-  .page-screen.route-skills .star-field { width: 1240px; height: 800px; }
+  .page-screen.route-skills .star-field { width: 1440px; height: 900px; }
   .page-screen.route-skills .skill-detail { width: auto; border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
   /* Mobile map readability: contained panning, legible labels over the grid.
      Labels stay transparent with a text shadow — no opaque box — so a label
@@ -370,7 +370,7 @@ a.sysbar-btn:hover { text-shadow: none; }
 @media (max-width: 480px) {
   /* Smaller phones: a step-down map world. DOM nodes ride percentages and
      the canvas maps the same field size, so hit-areas stay aligned. */
-  .page-screen.route-skills .star-field { width: 980px; height: 632px; }
+  .page-screen.route-skills .star-field { width: 1024px; height: 640px; }
 }
 .slot { position: relative; }
 .portrait-frame {
@@ -508,10 +508,16 @@ a.sysbar-btn:hover { text-shadow: none; }
   border: 1px solid var(--line); border-radius: var(--radius);
   overflow: auto; max-height: min(62vh, 560px);
   scrollbar-width: thin; scrollbar-color: var(--line) transparent;
-  background: var(--ink);
+  background:
+    radial-gradient(circle at 50% 48%, rgba(245, 181, 68, 0.07) 0, transparent 55%),
+    repeating-radial-gradient(circle at 50% 48%, transparent 0 34px, rgba(245, 181, 68, 0.08) 34px 35px),
+    linear-gradient(rgba(245, 181, 68, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 181, 68, 0.05) 1px, transparent 1px),
+    var(--ink);
+  background-size: auto, auto, 100% 28px, 28px 100%, auto;
 }
 .star-field {
-  position: relative; width: 1240px; height: 800px;
+  position: relative; width: 1440px; height: 900px; min-width: 100%; min-height: 100%;
   background:
     radial-gradient(circle at 50% 48%, rgba(245, 181, 68, 0.07) 0, transparent 55%),
     repeating-radial-gradient(circle at 50% 48%, transparent 0 34px, rgba(245, 181, 68, 0.08) 34px 35px),

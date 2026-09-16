@@ -65,7 +65,7 @@ for (const token of ['grand-row', 'dreamHover', 'navigate', 'move(1)', 'ArrowRig
 if (process.exitCode !== 1) pass('grand menu flow wired')
 if (!dreamSrc.includes('startDream') || !dreamSrc.includes('prefers-reduced-motion')) fail('dream engine incomplete')
 else pass('dream engine present')
-for (const token of ['planet', 'onSelect', 'hit', 'orbit', 'canvasLit', 'ringBand', 'ORBIT_SPEED', 'cometT', 'haloR', 'reticle', 'dimmed', 'beacon', 'padStart', 'tagPx', 'hypot(W, H)', 'fitSystem', 'sunspot', 'tick ring', 'sunClear', 'labelBoxes', 'deconflict', 'leader', 'touchstart', 'touchR', 'bestD']) {
+for (const token of ['planet', 'onSelect', 'hit', 'orbit', 'canvasLit', 'ringBand', 'ORBIT_SPEED', 'cometT', 'haloR', 'reticle', 'dimmed', 'beacon', 'padStart', 'tagPx', 'hypot(W, H)', 'fitSystem', 'sunspot', 'tick ring', 'sunClear', 'labelBoxes', 'deconflict', 'leader', 'pointerdown', 'touchR', 'bestD', 'zoomAt', 'pinch']) {
   if (!dreamSrc.includes(token)) fail(`solar system missing ${token}`)
 }
 if (process.exitCode !== 1) pass('solar system wired')

@@ -78,41 +78,60 @@ export function startDream(
   let W = 0
   let H = 0
   let NAV_W = 0
+  // Camera: pinch / wheel zoom plus drag-pan for a game-like feel.
+  // Identity reproduces the old framing exactly (layout center lands on
+  // viewport center). Mobile draws the fixed world through the camera
+  // instead of a scrollable oversized canvas: planets stay big and
+  // tappable, users pan and pinch to explore.
+  let scale = 1
+  let ox = 0
+  let oy = 0
+  // Viewport (backing store) size; W/H below are layout-space extents.
+  let VW = 0
+  let VH = 0
+  const ZMIN = 0.5
+  const ZMAX = 3
   const availW = () => Math.max(320, W - NAV_W)
-  // Mobile renders a fixed full-size world inside a scrollable viewport
-  // instead of shrinking the whole system to fit: planets stay big and
-  // tappable, users pan to explore. Matches the 720px planet-only CSS.
   const mobileWorld = () => window.matchMedia('(max-width: 720px)').matches
   const WORLD_W = 1040
   const WORLD_H = 1150
   const resize = () => {
     const parent = canvas.parentElement
+    VW = Math.max(320, parent?.clientWidth || window.innerWidth)
+    VH = Math.max(320, parent?.clientHeight || window.innerHeight)
     if (mobileWorld()) {
       W = WORLD_W
       H = WORLD_H
-      canvas.width = W
-      canvas.height = H
-      canvas.style.width = `${W}px`
-      canvas.style.height = `${H}px`
     } else {
       W = Math.max(320, parent?.clientWidth || window.innerWidth)
       H = Math.max(480, parent?.clientHeight || window.innerHeight)
-      canvas.width = W
-      canvas.height = H
-      canvas.style.width = ''
-      canvas.style.height = ''
     }
+    canvas.width = VW
+    canvas.height = VH
+    canvas.style.width = '100%'
+    canvas.style.height = '100%'
     NAV_W = document.getElementById('side-nav')?.getBoundingClientRect().width ?? 0
   }
   resize()
   window.addEventListener('resize', resize)
-  // Start centered on the system instead of the world's top-left corner.
-  if (mobileWorld()) {
-    const parent = canvas.parentElement
-    if (parent) {
-      parent.scrollLeft = Math.max(0, (WORLD_W - parent.clientWidth) / 2)
-      parent.scrollTop = Math.max(0, (WORLD_H - parent.clientHeight) / 2)
-    }
+  // Layout->screen translation for the current camera. Anchor: layout
+  // center maps to viewport center, so identity keeps the old framing.
+  const trans = (): { tx: number; ty: number } => ({
+    tx: VW / 2 - (W / 2) * scale + ox,
+    ty: VH / 2 - (H / 2) * scale + oy,
+  })
+  // Zoom keeping the screen point (sx, sy) pinned to its layout point.
+  const zoomAt = (sx: number, sy: number, ns: number): void => {
+    const clamped = Math.min(ZMAX, Math.max(ZMIN, ns))
+    if (clamped === scale) return
+    const { tx, ty } = trans()
+    const lx = (sx - tx) / scale
+    const ly = (sy - ty) / scale
+    scale = clamped
+    // solve pan so the pinned layout point lands back under the cursor:
+    // tx = VW/2 - (W/2)*scale + ox  ->  ox = sx - lx*scale - (VW/2 - (W/2)*scale)
+    ox = sx - lx * scale - (VW / 2 - (W / 2) * scale)
+    oy = sy - ly * scale - (VH / 2 - (H / 2) * scale)
   }
 
   let raf = 0
@@ -162,13 +181,18 @@ export function startDream(
 
   const draw = (t: number) => {
     const ts = reduced ? 1.2 : t / 1000
-    ctx.clearRect(0, 0, W, H)
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, VW, VH)
     const { U, maxR } = fitSystem()
     const aw = availW()
     const cx = NAV_W + aw * 0.5
     const cy = H * 0.5
     const rot = ts * 0.05
     centers = []
+    // Camera: layout space pans and zooms under the pointer while the
+    // backing store stays viewport-sized.
+    const { tx, ty } = trans()
+    ctx.setTransform(scale, 0, 0, scale, tx, ty)
 
     // No nebula washes: every background glow except the page itself was
     // reading as smudged boxes on phones, so the backdrop stays flat and
@@ -548,19 +572,31 @@ export function startDream(
         }
       }
     }
+    // back to identity so next frame's clear covers the backing store
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
   }
 
-  const hit = (mx: number, my: number): number | null => {
+  // screen (client) -> backing px, accounting for CSS/backing mismatch
+  // (mobile URL bars, orientation flips) so taps land where drawn
+  const toBacking = (mx: number, my: number): Pt => {
     const rect = canvas.getBoundingClientRect()
-    // map through any CSS/backing-store size mismatch (mobile URL bars,
-    // orientation flips) so taps land where the planets are drawn
     const sx = canvas.width / (rect.width || 1)
     const sy = canvas.height / (rect.height || 1)
-    const x = (mx - rect.left) * sx
-    const y = (my - rect.top) * sy
+    return { x: (mx - rect.left) * sx, y: (my - rect.top) * sy }
+  }
+  // backing -> layout through the inverse camera
+  const toLayout = (p: Pt): Pt => {
+    const { tx, ty } = trans()
+    return { x: (p.x - tx) / scale, y: (p.y - ty) / scale }
+  }
+  const hit = (mx: number, my: number): number | null => {
+    const l = toLayout(toBacking(mx, my))
+    const x = l.x
+    const y = l.y
     // fat-finger floor: tiny scaled-down planets stay tappable, and the
-    // nearest candidate wins so overlapping zones pick the intended body
-    const touchR = 34 * Math.max(sx, sy)
+    // nearest candidate wins so overlapping zones pick the intended body.
+    // Radii are layout-space, so the touch floor shrinks as you zoom in.
+    const touchR = 34 / scale
     const { U: hu } = fitSystem()
     let best: number | null = null
     let bestD = Infinity
@@ -585,8 +621,8 @@ export function startDream(
   }
 
   let canvasLit = false
-  const onMove = (e: MouseEvent) => {
-    const i = hit(e.clientX, e.clientY)
+  const hoverMove = (clientX: number, clientY: number): void => {
+    const i = hit(clientX, clientY)
     canvas.style.cursor = i !== null ? 'pointer' : 'default'
     if (i !== null) {
       hover.index = i
@@ -596,28 +632,123 @@ export function startDream(
       canvasLit = false
     }
   }
-  const onClick = (e: MouseEvent) => {
-    const i = hit(e.clientX, e.clientY)
+  const onMove = (e: MouseEvent): void => {
+    if (e.buttons !== 0) return
+    hoverMove(e.clientX, e.clientY)
+  }
+  const onTapSelect = (clientX: number, clientY: number): void => {
+    const i = hit(clientX, clientY)
     if (i !== null) onSelect(i)
   }
-  // touch ignition: light the planet under the finger on contact so taps
-  // give instant feedback; the synthesized click then lands the page
-  const onTouch = (e: TouchEvent) => {
-    const t = e.touches[0]
-    if (!t) return
-    const i = hit(t.clientX, t.clientY)
-    if (i !== null) {
-      hover.index = i
-      canvasLit = true
-    } else if (canvasLit) {
-      hover.index = null
-      canvasLit = false
+  // Game camera: one-finger / mouse drag pans, two-finger pinch zooms,
+  // wheel zooms at the cursor, double-tap toggles. A tap (no drag)
+  // falls through to the click handler and selects the planet.
+  const pts = new Map<number, Pt>()
+  let downAt: Pt | null = null
+  let dragged = false
+  let pinch0: { dist: number; lx: number; ly: number } | null = null
+  let lastTap = 0
+  const redraw = (): void => {
+    if (reduced) draw(1200)
+  }
+  const onPointerDown = (e: PointerEvent): void => {
+    try {
+      canvas.setPointerCapture(e.pointerId)
+    } catch {
+      /* older browsers: gestures still work without capture */
+    }
+    const p = toBacking(e.clientX, e.clientY)
+    pts.set(e.pointerId, p)
+    if (pts.size === 1) {
+      downAt = p
+      dragged = false
+      if (e.pointerType !== 'mouse') hoverMove(e.clientX, e.clientY)
+    } else if (pts.size === 2) {
+      const [a, b] = [...pts.values()]
+      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+      const l = toLayout(mid)
+      pinch0 = { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, lx: l.x, ly: l.y }
+      dragged = true
     }
   }
+  const onPointerMove = (e: PointerEvent): void => {
+    if (!pts.has(e.pointerId)) {
+      if (e.pointerType === 'mouse') hoverMove(e.clientX, e.clientY)
+      return
+    }
+    const prev = pts.get(e.pointerId) as Pt
+    const cur = toBacking(e.clientX, e.clientY)
+    pts.set(e.pointerId, cur)
+    if (pts.size === 1) {
+      if (downAt && Math.hypot(cur.x - downAt.x, cur.y - downAt.y) > 8) dragged = true
+      if (dragged) {
+        ox += cur.x - prev.x
+        oy += cur.y - prev.y
+        redraw()
+      } else if (e.pointerType === 'mouse') {
+        hoverMove(e.clientX, e.clientY)
+      } else {
+        hoverMove(e.clientX, e.clientY)
+      }
+    } else if (pts.size === 2 && pinch0) {
+      const [a, b] = [...pts.values()]
+      const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1
+      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+      const ns = Math.min(ZMAX, Math.max(ZMIN, (scale * dist) / pinch0.dist))
+      scale = ns
+      // pin the gesture-start layout point under the live midpoint
+      ox = mid.x - pinch0.lx * ns - (VW / 2 - (W / 2) * ns)
+      oy = mid.y - pinch0.ly * ns - (VH / 2 - (H / 2) * ns)
+      redraw()
+    }
+  }
+  const endPointer = (e: PointerEvent): void => {
+    pts.delete(e.pointerId)
+    if (pts.size < 2) pinch0 = null
+    if (pts.size === 0) {
+      const now = performance.now()
+      if (e.pointerType !== 'mouse' && !dragged && now - lastTap < 320) {
+        // double-tap: empty space toggles zoom, planets keep tap-to-select
+        if (hit(e.clientX, e.clientY) === null) {
+          const p = toBacking(e.clientX, e.clientY)
+          zoomAt(p.x, p.y, scale > 1.4 ? 1 : 2)
+          redraw()
+          dragged = true
+        }
+        lastTap = 0
+      } else if (!dragged) {
+        lastTap = now
+      }
+      downAt = null
+    }
+  }
+  const onDblClick = (e: MouseEvent): void => {
+    if (hit(e.clientX, e.clientY) !== null) return
+    const p = toBacking(e.clientX, e.clientY)
+    zoomAt(p.x, p.y, scale > 1.4 ? 1 : 2)
+    redraw()
+  }
+  const onWheel = (e: WheelEvent): void => {
+    e.preventDefault()
+    const p = toBacking(e.clientX, e.clientY)
+    zoomAt(p.x, p.y, scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15))
+    redraw()
+  }
+  const onClickSelect = (e: MouseEvent): void => {
+    if (dragged) {
+      dragged = false
+      return
+    }
+    onTapSelect(e.clientX, e.clientY)
+  }
   canvas.addEventListener('mousemove', onMove)
-  canvas.addEventListener('click', onClick)
-  canvas.addEventListener('touchstart', onTouch, { passive: true })
-  canvas.addEventListener('touchmove', onTouch, { passive: true })
+  canvas.addEventListener('click', onClickSelect)
+  canvas.addEventListener('pointerdown', onPointerDown)
+  canvas.addEventListener('pointermove', onPointerMove)
+  canvas.addEventListener('pointerup', endPointer)
+  canvas.addEventListener('pointercancel', endPointer)
+  canvas.addEventListener('dblclick', onDblClick)
+  canvas.addEventListener('wheel', onWheel, { passive: false })
 
   const frame = (t: number) => {
     if (reduced) {
@@ -639,9 +770,13 @@ export function startDream(
   return () => {
     cancelAnimationFrame(raf)
     canvas.removeEventListener('mousemove', onMove)
-    canvas.removeEventListener('click', onClick)
-    canvas.removeEventListener('touchstart', onTouch)
-    canvas.removeEventListener('touchmove', onTouch)
+    canvas.removeEventListener('click', onClickSelect)
+    canvas.removeEventListener('pointerdown', onPointerDown)
+    canvas.removeEventListener('pointermove', onPointerMove)
+    canvas.removeEventListener('pointerup', endPointer)
+    canvas.removeEventListener('pointercancel', endPointer)
+    canvas.removeEventListener('dblclick', onDblClick)
+    canvas.removeEventListener('wheel', onWheel)
     window.removeEventListener('resize', resize)
   }
 }

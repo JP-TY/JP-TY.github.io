@@ -238,6 +238,10 @@ export interface CModel {
   traces: CTrace[]
   isActive: (branch: string) => boolean
   hover: { branch: string | null }
+  /** Zoom camera: the field grows by this factor (native scroll pans) and
+   *  every canvas-drawn size multiplies by it, matching the DOM hit-areas
+   *  which scale through the --z custom property. */
+  view: { scale: number }
 }
 
 export function startConstellation(canvas: HTMLCanvasElement, model: CModel): () => void {
@@ -256,6 +260,11 @@ export function startConstellation(canvas: HTMLCanvasElement, model: CModel): ()
   }
   resize()
   window.addEventListener('resize', resize)
+  // The field is resized by the zoom camera too (not just the window),
+  // so watch its box and refit the backing store on every change.
+  const roParent = canvas.parentElement
+  const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => resize())
+  if (ro && roParent) ro.observe(roParent)
   const X = (x: number): number => (x * W) / MW
   const Y = (y: number): number => (y * H) / MH
 
@@ -317,7 +326,8 @@ export function startConstellation(canvas: HTMLCanvasElement, model: CModel): ()
   // Glyph blit quantized through the animated threshold; pass verts to
   // clip the blit inside a polygon (the portrait stays in its hex).
   // Gain thins a blit out — photos get a lower gain so the dot-matrix
-  // reads instead of filling a slab.
+  // reads instead of filling a slab. ps scales the plotted output so the
+  // blit enlarges live with the zoom camera (source raster stays fixed).
   const drawRaster = (
     r: Raster,
     ox: number,
@@ -326,23 +336,26 @@ export function startConstellation(canvas: HTMLCanvasElement, model: CModel): ()
     ts: number,
     clip: [number, number][] | null,
     gain = 1,
+    ps = 1,
   ): void => {
     for (let gy = 0; gy < r.h; gy += 1) {
       for (let gx = 0; gx < r.w; gx += 1) {
         const idx = (gy * r.w + gx) * 4
         const a = (r.data[idx + 3] / 255) * gain
         if (a < 0.05) continue
-        if (clip && !inPoly(ox + gx, oy + gy, clip)) continue
+        const qx = ox + gx * ps
+        const qy = oy + gy * ps
+        if (clip && !inPoly(qx, qy, clip)) continue
         const thr = (BAYER[(gy % 4) * 4 + (gx % 4)] / 16) * 0.6 + 0.1 * Math.sin(ts * 2.5 + gx * 0.5 + gy * 0.4)
         if (a < thr) continue
-        const s = 1 + a * 1.1
+        const s = (1 + a * 1.1) * ps
         if (r.color) {
           const alpha = ((live ? 1 : 0.45) * Math.min(1, a + 0.15)).toFixed(3)
           ctx.fillStyle = `rgba(${r.data[idx]}, ${r.data[idx + 1]}, ${r.data[idx + 2]}, ${alpha})`
-          ctx.fillRect(ox + gx - s / 2, oy + gy - s / 2, s, s)
+          ctx.fillRect(qx - s / 2, qy - s / 2, s, s)
           continue
         }
-        dot(ox + gx, oy + gy, s, a > 0.7, (live ? 1 : 0.45) * Math.min(1, a + 0.15))
+        dot(qx, qy, s, a > 0.7, (live ? 1 : 0.45) * Math.min(1, a + 0.15))
       }
     }
   }
@@ -375,7 +388,12 @@ export function startConstellation(canvas: HTMLCanvasElement, model: CModel): ()
       const live = model.isActive(n.branch) || model.hover.branch === n.branch
       const cx = X(n.x)
       const cy = Y(n.y)
-      const verts = hexVerts(cx, cy, n.w, n.h)
+      // Zoom camera: geometry multiplies by the shared scale so canvas
+      // hexes always match their DOM hit-areas (sized via --z).
+      const S = model.view.scale
+      const nw = n.w * S
+      const nh = n.h * S
+      const verts = hexVerts(cx, cy, nw, nh)
       // hexagon outline, built dot by dot with animated boil
       for (let e = 0; e < 6; e += 1) {
         const [ax, ay] = verts[e]
@@ -391,16 +409,16 @@ export function startConstellation(canvas: HTMLCanvasElement, model: CModel): ()
           const thr = (BAYER[(iy % 4) * 4 + (ix % 4)] / 16) * 0.6 + 0.12 * Math.sin(ts * 3 + ix)
           const b = (0.45 + 0.55 * hash(ix, iy)) * shimmer
           if (b < thr) continue
-          dot(px, py, live ? 2.4 : 1.8, live && b > 0.72, (live ? 0.95 : 0.4) * Math.min(1, b + 0.25))
+          dot(px, py, (live ? 2.4 : 1.8) * S, live && b > 0.72, (live ? 0.95 : 0.4) * Math.min(1, b + 0.25))
         }
       }
       // sonar pulse on the selected branch's anchor node
       if (n.kind === 'branch' && live && !reduced) {
-        const pr = n.w / 2 + 8 + ((ts * 22) % 26)
+        const pr = nw / 2 + 8 * S + ((ts * 22) % (26 * S))
         for (let s = 0; s <= 40; s += 1) {
           const pa = (s / 40) * Math.PI * 2
           if (hash(s, 999) < 0.5) continue
-          dot(cx + Math.cos(pa) * pr, cy + Math.sin(pa) * pr * 0.87, 1.6, true, Math.max(0, 0.8 - (pr - n.w / 2) / 40))
+          dot(cx + Math.cos(pa) * pr, cy + Math.sin(pa) * pr * 0.87, 1.6 * S, true, Math.max(0, 0.8 - (pr - nw / 2) / (40 * S)))
         }
       }
       // glyph, quantized through the same animated threshold; the
@@ -411,19 +429,22 @@ export function startConstellation(canvas: HTMLCanvasElement, model: CModel): ()
         const isPhoto = 'img' in n.art
         const colorful = isPhoto && 'color' in n.art && n.art.color === true
         const gain = !isPhoto ? 1 : 'ink' in n.art && n.art.ink ? 1 : colorful ? 1 : 0.6
-        drawRaster(r, cx - r.w / 2, cy - r.h / 2, live, ts, isPhoto ? verts : null, gain)
+        drawRaster(r, cx - (r.w * S) / 2, cy - (r.h * S) / 2, live, ts, isPhoto ? verts : null, gain, S)
       }
       // name caption riding below the core medallion
       const cap = captions.get(n)
       if (cap) {
-        drawRaster(cap, cx - cap.w / 2, cy + n.h / 2 + 12, live, ts, null)
+        drawRaster(cap, cx - (cap.w * S) / 2, cy + nh / 2 + 12 * S, live, ts, null, 1, S)
       }
     }
   }
 
   if (reduced) {
     void ready.then(() => draw(1200))
-    return () => window.removeEventListener('resize', resize)
+    return () => {
+      window.removeEventListener('resize', resize)
+      ro?.disconnect()
+    }
   }
 
   let dead = false
@@ -443,5 +464,6 @@ export function startConstellation(canvas: HTMLCanvasElement, model: CModel): ()
     dead = true
     cancelAnimationFrame(raf)
     window.removeEventListener('resize', resize)
+    ro?.disconnect()
   }
 }

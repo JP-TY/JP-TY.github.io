@@ -198,7 +198,7 @@ a.sysbar-btn:hover { text-shadow: none; }
 
 /* Menu: integrated index column docked left; solar system shifted right */
 .menu-screen { position: relative; min-height: 0; flex: 1; display: grid; overflow: hidden; }
-#dream { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: manipulation; }
+#dream { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
 /* No shade overlay: only the overall page background stays. Any extra
    gradient layer read as a backdrop box on phones. */
 .menu-shade {
@@ -362,7 +362,7 @@ a.sysbar-btn:hover { text-shadow: none; }
      never reads as a black backdrop sitting on top of a neighboring planet. */
   .page-screen.route-skills .star-map { overscroll-behavior: contain; touch-action: pan-x pan-y; }
   .page-screen.route-skills .hex-label {
-    font-size: 0.6875rem; max-width: 110px;
+    font-size: calc(0.6875rem * var(--z)); max-width: calc(110px * var(--z));
     background: transparent; border: 0; box-shadow: none; padding: 0; border-radius: 0;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.9);
     pointer-events: none;
@@ -509,7 +509,9 @@ a.sysbar-btn:hover { text-shadow: none; }
 .star-map {
   border: 1px solid var(--line); border-radius: var(--radius);
   overflow: auto; max-height: min(62vh, 560px);
-  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  /* Game viewport: pan/zoom inside, no chrome scrollbars anywhere. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   background:
     radial-gradient(circle at 50% 48%, rgba(245, 181, 68, 0.07) 0, transparent 55%),
     repeating-radial-gradient(circle at 50% 48%, transparent 0 34px, rgba(245, 181, 68, 0.08) 34px 35px),
@@ -520,6 +522,11 @@ a.sysbar-btn:hover { text-shadow: none; }
 }
 .star-field {
   position: relative; width: 1440px; height: 900px; min-width: 100%; min-height: 100%;
+  /* Zoom camera scale (set from JS); DOM hit-areas grow with it so they
+     always match the canvas hexes, which multiply by the same factor.
+     touch-action:none: drag pans and pinch zooms via pointer handlers. */
+  --z: 1;
+  touch-action: none;
   background:
     radial-gradient(circle at 50% 48%, rgba(245, 181, 68, 0.07) 0, transparent 55%),
     repeating-radial-gradient(circle at 50% 48%, transparent 0 34px, rgba(245, 181, 68, 0.08) 34px 35px),
@@ -527,6 +534,8 @@ a.sysbar-btn:hover { text-shadow: none; }
     linear-gradient(90deg, rgba(245, 181, 68, 0.05) 1px, transparent 1px);
   background-size: auto, auto, 100% 28px, 28px 100%;
 }
+.star-map::-webkit-scrollbar,
+.menu-screen::-webkit-scrollbar { display: none; }
 .star-dust { position: absolute; inset: 0; width: 100%; height: 100%; }
 .star-const { position: absolute; inset: 0; width: 100%; height: 100%; }
 .star-node { position: absolute; transform: translate(-50%, -50%); display: grid; background: transparent; }
@@ -535,12 +544,12 @@ a.sysbar-btn:hover { text-shadow: none; }
 /* No rectangular outline on hexes: keyboard focus is already visible via
    the canvas hex lighting + label highlight driven by updateLit. */
 .hex:focus, .hex:focus-visible { outline: none; }
-.hex.branch { width: 64px; height: 56px; }
-.hex.item { width: 52px; height: 45px; }
+.hex.branch { width: calc(64px * var(--z)); height: calc(56px * var(--z)); }
+.hex.item { width: calc(52px * var(--z)); height: calc(45px * var(--z)); }
 .hex-label {
-  position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
-  width: max-content; max-width: 110px; text-align: center;
-  font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.06em; line-height: 1.4;
+  position: absolute; top: calc(100% + 10px * var(--z)); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: calc(110px * var(--z)); text-align: center;
+  font-family: var(--font-mono); font-size: calc(0.625rem * var(--z)); letter-spacing: 0.06em; line-height: 1.4;
   color: var(--dim); background: transparent; border: 0; box-shadow: none; pointer-events: none;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.9);
 }
@@ -758,7 +767,7 @@ a.sysbar-btn:hover { text-shadow: none; }
   .side-nav { display: none; }
   /* Full-size scrollable system: the canvas runs at a fixed world size
      so planets stay big; users pan to explore. */
-  .menu-screen { display: block; overflow: auto; overscroll-behavior: contain; }
+  .menu-screen { display: block; overflow: auto; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none; }
   .menu-shade { background: transparent; }
   .grand-label { font-size: clamp(1.15rem, 4.4vw, 1.5rem); }
   .grand-row { padding-right: 12px; }

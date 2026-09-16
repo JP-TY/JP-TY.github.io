@@ -353,7 +353,7 @@ a.sysbar-btn:hover { text-shadow: none; }
   .page-screen.route-skills { overflow-y: auto; }
   .page-screen.route-skills .doc.skills { flex-direction: column; min-width: 0; }
   .page-screen.route-skills .star-map { min-height: 62vh; flex: none; overflow: auto; }
-  .page-screen.route-skills .star-field { width: 1080px; height: 700px; }
+  .page-screen.route-skills .star-field { width: 1240px; height: 800px; }
   .page-screen.route-skills .skill-detail { width: auto; border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
   /* Mobile map readability: contained panning, legible labels over the grid.
      Labels stay transparent with a text shadow — no opaque box — so a label
@@ -361,7 +361,7 @@ a.sysbar-btn:hover { text-shadow: none; }
   .page-screen.route-skills .star-map { overscroll-behavior: contain; touch-action: pan-x pan-y; }
   .page-screen.route-skills .hex-label {
     font-size: 0.6875rem; max-width: 110px;
-    background: transparent; padding: 0; border-radius: 0;
+    background: transparent; border: 0; box-shadow: none; padding: 0; border-radius: 0;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.9);
     pointer-events: none;
   }
@@ -370,7 +370,7 @@ a.sysbar-btn:hover { text-shadow: none; }
 @media (max-width: 480px) {
   /* Smaller phones: a step-down map world. DOM nodes ride percentages and
      the canvas maps the same field size, so hit-areas stay aligned. */
-  .page-screen.route-skills .star-field { width: 900px; height: 584px; }
+  .page-screen.route-skills .star-field { width: 980px; height: 632px; }
 }
 .slot { position: relative; }
 .portrait-frame {
@@ -511,7 +511,7 @@ a.sysbar-btn:hover { text-shadow: none; }
   background: var(--ink);
 }
 .star-field {
-  position: relative; width: 1080px; height: 700px;
+  position: relative; width: 1240px; height: 800px;
   background:
     radial-gradient(circle at 50% 48%, rgba(245, 181, 68, 0.07) 0, transparent 55%),
     repeating-radial-gradient(circle at 50% 48%, transparent 0 34px, rgba(245, 181, 68, 0.08) 34px 35px),
@@ -521,19 +521,19 @@ a.sysbar-btn:hover { text-shadow: none; }
 }
 .star-dust { position: absolute; inset: 0; width: 100%; height: 100%; }
 .star-const { position: absolute; inset: 0; width: 100%; height: 100%; }
-.star-node { position: absolute; transform: translate(-50%, -50%); display: grid; }
+.star-node { position: absolute; transform: translate(-50%, -50%); display: grid; background: transparent; }
 /* Transparent hit-areas: the canvas draws the hexagons, these take input. */
-.hex { border: 0; padding: 0; background: transparent; cursor: pointer; }
+.hex { border: 0; padding: 0; background: transparent; box-shadow: none; cursor: pointer; }
 /* No rectangular outline on hexes: keyboard focus is already visible via
    the canvas hex lighting + label highlight driven by updateLit. */
 .hex:focus, .hex:focus-visible { outline: none; }
 .hex.branch { width: 64px; height: 56px; }
 .hex.item { width: 52px; height: 45px; }
 .hex-label {
-  position: absolute; top: calc(100% + 5px); left: 50%; transform: translateX(-50%);
-  width: max-content; max-width: 100px; text-align: center;
+  position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: 110px; text-align: center;
   font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: 0.06em; line-height: 1.4;
-  color: var(--dim); background: transparent; pointer-events: none;
+  color: var(--dim); background: transparent; border: 0; box-shadow: none; pointer-events: none;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.9);
 }
 .star-node.is-lit > .hex-label { color: var(--amber); }

@@ -89,7 +89,7 @@ if ((cssAll.match(/\.trophies\s*\{/g) || []).length < 2) fail('awards rail missi
 else pass('awards rail present on mobile')
 if (!cssAll.includes('.page-screen.route-skills .star-map { min-height: 62vh; flex: none; overflow: auto; }')) fail('skills map not pannable on mobile')
 else pass('skills map pannable on mobile')
-if (!cssAll.includes('.page-screen.route-skills .star-field { width: 1080px; height: 700px; }')) fail('skills field squeezed on mobile')
+if (!cssAll.includes('.page-screen.route-skills .star-field { width: 1240px; height: 800px; }')) fail('skills field squeezed on mobile')
 else pass('skills field keeps full size on mobile')
 if (!cssAll.includes('.page-screen.route-skills .doc.skills { flex-direction: column; min-width: 0; }')) fail('skills column blows out on mobile')
 else pass('skills column contained on mobile')

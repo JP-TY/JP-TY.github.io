@@ -56,7 +56,7 @@ import type { CModel, CNode, CTrace } from '../engine/constellation'
 
 type Icon = unknown
 
-const CORE_POS = { x: 540, y: 350 }
+const CORE_POS = { x: 620, y: 400 }
 // Hit-area sizes mirror the canvas geometry exactly.
 const HEX_SIZES = {
   core: { w: 76, h: 66 },
@@ -104,35 +104,35 @@ const ITEM_ICONS: Record<string, Icon> = {
   'C#': Hash,
 }
 // Hand-spaced so nothing collides. Order matches each branch's items array.
-// Model space is 1080x700: branch anchors sit near the corners and items
-// hold ~120px+ center-to-center so hexes, glyphs, and DOM labels never
-// overlap (labels ride ~35px below each hex).
+// Model space is 1240x800: branch anchors sit near the corners and items
+// hold ~130px+ center-to-center so hexes, glyphs, and DOM labels (which ride
+// below each hex) never overlap a neighboring planet.
 const LAYOUT: Record<string, { branch: { x: number; y: number }; items: { x: number; y: number }[] }> = {
   cloud: {
-    branch: { x: 810, y: 175 },
+    branch: { x: 930, y: 200 },
     items: [
-      { x: 680, y: 80 }, { x: 810, y: 55 }, { x: 940, y: 80 },
-      { x: 650, y: 195 }, { x: 970, y: 195 }, { x: 700, y: 290 }, { x: 920, y: 290 },
+      { x: 780, y: 90 }, { x: 930, y: 60 }, { x: 1080, y: 90 },
+      { x: 750, y: 220 }, { x: 1110, y: 220 }, { x: 800, y: 330 }, { x: 1060, y: 330 },
     ],
   },
   ai: {
-    branch: { x: 270, y: 175 },
+    branch: { x: 310, y: 200 },
     items: [
-      { x: 140, y: 80 }, { x: 270, y: 55 }, { x: 400, y: 80 },
-      { x: 125, y: 195 }, { x: 415, y: 195 }, { x: 270, y: 290 },
+      { x: 160, y: 90 }, { x: 310, y: 60 }, { x: 460, y: 90 },
+      { x: 130, y: 220 }, { x: 490, y: 220 }, { x: 310, y: 330 },
     ],
   },
   systems: {
-    branch: { x: 810, y: 525 },
+    branch: { x: 930, y: 600 },
     items: [
-      { x: 680, y: 425 }, { x: 810, y: 400 }, { x: 940, y: 425 },
-      { x: 680, y: 625 }, { x: 810, y: 650 }, { x: 940, y: 625 },
+      { x: 780, y: 480 }, { x: 930, y: 455 }, { x: 1080, y: 480 },
+      { x: 780, y: 700 }, { x: 930, y: 725 }, { x: 1080, y: 700 },
     ],
   },
   languages: {
-    branch: { x: 270, y: 525 },
+    branch: { x: 310, y: 600 },
     items: [
-      { x: 150, y: 430 }, { x: 390, y: 430 }, { x: 150, y: 620 }, { x: 390, y: 620 },
+      { x: 170, y: 485 }, { x: 450, y: 485 }, { x: 170, y: 705 }, { x: 450, y: 705 },
     ],
   },
 }
@@ -304,10 +304,10 @@ function renderSkills(): HTMLElement {
   const hover: { branch: string | null } = { branch: null }
   const cnodes: CNode[] = []
   const ctraces: CTrace[] = []
-  // Model space is 1080x700; DOM nodes ride as percentages so the layout
+  // Model space is 1240x800; DOM nodes ride as percentages so the layout
   // stretches across any viewport while the canvas maps the same space.
-  const px = (x: number): string => `${((x / 1080) * 100).toFixed(2)}%`
-  const py = (y: number): string => `${((y / 700) * 100).toFixed(2)}%`
+  const px = (x: number): string => `${((x / 1240) * 100).toFixed(2)}%`
+  const py = (y: number): string => `${((y / 800) * 100).toFixed(2)}%`
   // Mobile: the fixed-size field overflows the map viewport, so center
   // the selected branch anchor in view. No-op on desktop where nothing
   // overflows. Instant under reduced motion.

@@ -79,16 +79,41 @@ export function startDream(
   let H = 0
   let NAV_W = 0
   const availW = () => Math.max(320, W - NAV_W)
+  // Mobile renders a fixed full-size world inside a scrollable viewport
+  // instead of shrinking the whole system to fit: planets stay big and
+  // tappable, users pan to explore. Matches the 720px planet-only CSS.
+  const mobileWorld = () => window.matchMedia('(max-width: 720px)').matches
+  const WORLD_W = 860
+  const WORLD_H = 1000
   const resize = () => {
     const parent = canvas.parentElement
-    W = Math.max(320, parent?.clientWidth || window.innerWidth)
-    H = Math.max(480, parent?.clientHeight || window.innerHeight)
-    canvas.width = W
-    canvas.height = H
+    if (mobileWorld()) {
+      W = WORLD_W
+      H = WORLD_H
+      canvas.width = W
+      canvas.height = H
+      canvas.style.width = `${W}px`
+      canvas.style.height = `${H}px`
+    } else {
+      W = Math.max(320, parent?.clientWidth || window.innerWidth)
+      H = Math.max(480, parent?.clientHeight || window.innerHeight)
+      canvas.width = W
+      canvas.height = H
+      canvas.style.width = ''
+      canvas.style.height = ''
+    }
     NAV_W = document.getElementById('side-nav')?.getBoundingClientRect().width ?? 0
   }
   resize()
   window.addEventListener('resize', resize)
+  // Start centered on the system instead of the world's top-left corner.
+  if (mobileWorld()) {
+    const parent = canvas.parentElement
+    if (parent) {
+      parent.scrollLeft = Math.max(0, (WORLD_W - parent.clientWidth) / 2)
+      parent.scrollTop = Math.max(0, (WORLD_H - parent.clientHeight) / 2)
+    }
+  }
 
   let raf = 0
   let last = 0
@@ -122,6 +147,9 @@ export function startDream(
   // scale 1 and render full-size. The system is laid out right of the
   // index column, centered within the remaining space.
   const fitSystem = (): { U: number; maxR: number } => {
+    // Fixed-world mobile: full-size planets and tags, no shrink-to-fit.
+    // 860x1000 world holds the 0.99 orbit plus the largest disc with margin.
+    if (mobileWorld()) return { U: 1, maxR: 280 }
     const aw = availW()
     const U0 = Math.min(Math.max(Math.min(aw, H) / 800, 0.7), 1.3)
     const maxR0 = Math.min(aw, H) * 0.7

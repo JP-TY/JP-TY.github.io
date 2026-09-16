@@ -743,6 +743,9 @@ a.sysbar-btn:hover { text-shadow: none; }
   /* Menu goes planet-only: the index column steps aside and the solar
      system takes the full viewport; taps land directly on planets. */
   .side-nav { display: none; }
+  /* Full-size scrollable system: the canvas runs at a fixed world size
+     so planets stay big; users pan to explore. */
+  .menu-screen { display: block; overflow: auto; overscroll-behavior: contain; }
   .menu-shade { background: linear-gradient(180deg, rgba(10, 12, 16, 0.5) 0%, rgba(10, 12, 16, 0.12) 35%, rgba(10, 12, 16, 0.12) 65%, rgba(10, 12, 16, 0.5) 100%); }
   .grand-label { font-size: clamp(1.15rem, 4.4vw, 1.5rem); }
   .grand-row { padding-right: 12px; }

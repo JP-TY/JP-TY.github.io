@@ -83,8 +83,8 @@ export function startDream(
   // instead of shrinking the whole system to fit: planets stay big and
   // tappable, users pan to explore. Matches the 720px planet-only CSS.
   const mobileWorld = () => window.matchMedia('(max-width: 720px)').matches
-  const WORLD_W = 860
-  const WORLD_H = 1000
+  const WORLD_W = 1040
+  const WORLD_H = 1150
   const resize = () => {
     const parent = canvas.parentElement
     if (mobileWorld()) {
@@ -148,8 +148,8 @@ export function startDream(
   // index column, centered within the remaining space.
   const fitSystem = (): { U: number; maxR: number } => {
     // Fixed-world mobile: full-size planets and tags, no shrink-to-fit.
-    // 860x1000 world holds the 0.99 orbit plus the largest disc with margin.
-    if (mobileWorld()) return { U: 1, maxR: 280 }
+    // 1040x1150 world holds the 0.99 orbit plus the largest disc with margin.
+    if (mobileWorld()) return { U: 1, maxR: 360 }
     const aw = availW()
     const U0 = Math.min(Math.max(Math.min(aw, H) / 800, 0.7), 1.3)
     const maxR0 = Math.min(aw, H) * 0.7
@@ -244,22 +244,24 @@ export function startDream(
       }
     }
 
-    // the sun
-    const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR * 0.48)
-    core.addColorStop(0, `rgba(255, 205, 120, ${(0.62 + 0.12 * Math.sin(ts * 1.1)).toFixed(3)})`)
+    // the sun: a soft breath, not a flood. The wide core wash used to
+    // stack with every planet halo into a giant smudge with a visible
+    // fillRect edge, so it stays tight and dim.
+    const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR * 0.34)
+    core.addColorStop(0, `rgba(255, 205, 120, ${(0.3 + 0.06 * Math.sin(ts * 1.1)).toFixed(3)})`)
     core.addColorStop(1, 'rgba(255, 143, 18, 0)')
     ctx.fillStyle = core
-    ctx.fillRect(cx - maxR * 0.48, cy - maxR * 0.48, maxR * 0.96, maxR * 0.96)
+    ctx.fillRect(cx - maxR * 0.34, cy - maxR * 0.34, maxR * 0.68, maxR * 0.68)
 
     // the sun: a proper dithered star. Boiling granulation disc with
     // dark sunspot umbrae, bright limb, hugging corona rings, rotating
     // flare arcs, a slow instrument tick ring, and a deep halo.
     const sunR = maxR * 0.12
-    const sunHalo = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunR * 3.2)
-    sunHalo.addColorStop(0, `rgba(255, 190, 90, ${(0.4 + 0.08 * Math.sin(ts * 1.3)).toFixed(3)})`)
+    const sunHalo = ctx.createRadialGradient(cx, cy, 0, cx, cy, sunR * 2.8)
+    sunHalo.addColorStop(0, `rgba(255, 190, 90, ${(0.2 + 0.05 * Math.sin(ts * 1.3)).toFixed(3)})`)
     sunHalo.addColorStop(1, 'rgba(255, 143, 18, 0)')
     ctx.fillStyle = sunHalo
-    ctx.fillRect(cx - sunR * 3.2, cy - sunR * 3.2, sunR * 6.4, sunR * 6.4)
+    ctx.fillRect(cx - sunR * 2.8, cy - sunR * 2.8, sunR * 5.6, sunR * 5.6)
     {
       const rad = Math.ceil(sunR) + 1
       const spots: [number, number, number][] = [
@@ -324,7 +326,7 @@ export function startDream(
     for (let k = 0; k < relaxIters; k += 1) {
       for (let i = 0; i < count; i += 1) {
         for (let j = i + 1; j < count; j += 1) {
-            const min = (PLANETS[i].size + PLANETS[j].size) * U + 30
+            const min = (PLANETS[i].size + PLANETS[j].size) * U + 64
           const dx = resolved[j].x - resolved[i].x
           const dy = resolved[j].y - resolved[i].y
           const d = Math.hypot(dx, dy) || 1
@@ -340,7 +342,7 @@ export function startDream(
       // the sun holds its court: planet centers stay out of the disc
       const sunClear = maxR * 0.12
       for (let i = 0; i < count; i += 1) {
-        const minSun = sunClear + PLANETS[i].size * U * 1.1 + 10
+        const minSun = sunClear + PLANETS[i].size * U * 1.1 + 24
         const sx = resolved[i].x - cx
         const sy = resolved[i].y - cy
         const sd = Math.hypot(sx, sy) || 1
@@ -422,9 +424,9 @@ export function startDream(
 
       // presence: soft glow halo + dotted halo ring so planets read as
       // foreground bodies, never background dust
-      const haloR = R * (live ? 2.6 : 2.1)
+      const haloR = R * (live ? 2.6 : 1.9)
       const hg = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, haloR)
-      hg.addColorStop(0, `rgba(255, 176, 66, ${(live ? 0.5 : dimmed ? 0.1 : 0.28).toFixed(3)})`)
+      hg.addColorStop(0, `rgba(255, 176, 66, ${(live ? 0.5 : dimmed ? 0.1 : 0.18).toFixed(3)})`)
       hg.addColorStop(1, 'rgba(255, 143, 18, 0)')
       ctx.fillStyle = hg
       ctx.fillRect(pos.x - haloR, pos.y - haloR, haloR * 2, haloR * 2)

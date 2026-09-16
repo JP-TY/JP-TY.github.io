@@ -308,14 +308,14 @@ function renderSkills(): HTMLElement {
   // Mobile: the fixed-size field overflows the map viewport, so center
   // the selected branch anchor in view. No-op on desktop where nothing
   // overflows. Instant under reduced motion.
-  function centerOn(id: string): void {
+  function centerOn(id: string, instant = false): void {
     const anchor = field.querySelector(`.hex.branch[data-branch="${id}"]`)?.closest('.star-node') as HTMLElement | null
     if (!anchor) return
     if (map.scrollWidth <= map.clientWidth && map.scrollHeight <= map.clientHeight) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const left = anchor.offsetLeft - map.clientWidth / 2
     const top = anchor.offsetTop - map.clientHeight / 2
-    map.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior: reduced ? 'auto' : 'smooth' })
+    map.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior: reduced || instant ? 'auto' : 'smooth' })
   }
   const select = (id: string): void => {
     activeBranch = id
@@ -425,7 +425,8 @@ function renderSkills(): HTMLElement {
   )
   wrap.append(map, buildDetail())
   // Mobile lands on the selected branch instead of the map's top-left void.
-  requestAnimationFrame(() => centerOn(activeBranch))
+  // Instant: the smooth glide read as the map being slow to settle.
+  requestAnimationFrame(() => centerOn(activeBranch, true))
   return wrap
 }
 

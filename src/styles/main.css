@@ -363,6 +363,11 @@ a.sysbar-btn:hover { text-shadow: none; }
   }
   .page-screen.route-skills .map-hint { font-size: 0.6875rem; }
 }
+@media (max-width: 480px) {
+  /* Smaller phones: a step-down map world. DOM nodes ride percentages and
+     the canvas maps the same field size, so hit-areas stay aligned. */
+  .page-screen.route-skills .star-field { width: 760px; height: 496px; }
+}
 .slot { position: relative; }
 .portrait-frame {
   position: relative; margin: 0 auto; max-width: 300px;

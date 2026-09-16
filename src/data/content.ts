@@ -278,7 +278,7 @@ export const sections = [
   { id: 'skills', label: 'SKILLS', kicker: '03 / 06', heading: 'Skill grid', intro: 'Select a node to inspect its branch.' },
   { id: 'experience', label: 'EXPERIENCE', kicker: '04 / 06', heading: 'Experience', intro: 'Roles and impact.' },
   { id: 'recognition', label: 'RECOGNITION', kicker: '05 / 06', heading: 'Recognition', intro: 'The trophy room: wins on the shelf, credentials in the case.' },
-  { id: 'contact', label: 'CONTACT', kicker: '06 / 06', heading: 'Contact', intro: 'Open to internships and collaboration.' },
+  { id: 'contact', label: 'CONTACT', kicker: '06 / 06', heading: 'Contact', intro: '' },
 ]
 
 export const counts = { projects: 5, roles: 4, certs: 7, awards: 8 }

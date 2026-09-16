@@ -47,7 +47,7 @@ function paint(route: Exclude<RouteId, 'menu'>): void {
   kicker.textContent = meta.kicker
   heading.textContent = meta.heading
   intro.textContent = meta.intro
-  intro.hidden = route === 'recognition' || route === 'profile' || route === 'skills'
+  intro.hidden = route === 'recognition' || route === 'profile' || route === 'skills' || !meta.intro
   body.innerHTML = ''
   body.appendChild(renderBody(route))
   animateCounts(body)

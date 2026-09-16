@@ -624,7 +624,6 @@ function renderRecognition(): HTMLElement {
 function renderContact(): HTMLElement {
   return el(`
     <div class="doc">
-      <p class="rise">Open to internships for Summer 2026 to 2027, collaborations, and community work.</p>
       <ul class="contact-list">
         <li class="rise"><a href="mailto:${profile.email}">EMAIL — ${profile.email}</a></li>
         <li class="rise"><a href="${profile.github}" target="_blank" rel="noopener noreferrer">GITHUB — github.com/JP-TY</a></li>
